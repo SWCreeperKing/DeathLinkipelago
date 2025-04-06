@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Archipelago.MultiClient.Net" Version="6.6.0" />
+      <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <PackageReference Include="Raylib-cs" Version="7.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Backbone">
+        <HintPath>..\..\AdventOfCode\Backbone\bin\Debug\net9.0\Backbone.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+</Project>
