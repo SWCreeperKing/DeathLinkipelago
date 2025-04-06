@@ -2,7 +2,6 @@
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
-using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Packets;
 using Backbone;
 using ImGuiNET;
@@ -35,7 +34,7 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 500, 550)
 class ArchipelagoClient
 {
     public const long UUID = 0x0AF5F0AC;
-    
+
     public ArchipelagoSession Session;
     public DeathLinkService DeathLink;
 
@@ -48,14 +47,17 @@ class ArchipelagoClient
     public int Port = 12345;
     public string[]? Error;
     public int Connected = -1;
-    public PlayerInfo[] PlayerInfos = [];
     public bool HasChangedSinceSave;
     public float SaveCooldown = 3;
     public float DeathCooldown = 30;
     public long MaxLocations;
     public long LocationsChecked;
+    public bool HasDeathButton;
+    public string[] PlayerNames = [];
+    public Dictionary<string, object> SlotData = [];
 
     public Dictionary<string, int> Deaths = [];
+
     public Dictionary<string, int> UsedItems = new()
     {
         ["The Urge to Die"] = 1,
@@ -86,10 +88,9 @@ class ArchipelagoClient
         while (Session.Items.Any())
         {
             var item = Session.Items.DequeueItem();
-            Console.WriteLine($"{item.ItemGame} | {item.ItemName} | {item.ItemDisplayName}");
             HeldItems[item.ItemName]++;
         }
-        
+
         if (DeathCooldown < 3)
         {
             DeathCooldown += deltaTime;
@@ -111,12 +112,12 @@ class ArchipelagoClient
             HasChangedSinceSave = true;
             DeathCooldown = 0;
         }
-        
+
         if (SaveCooldown < 30)
         {
             SaveCooldown += deltaTime;
         }
-        
+
         if (!HasChangedSinceSave || SaveCooldown < 30) return;
         HasChangedSinceSave = false;
         Session.DataStorage[Scope.Slot, "Used"] = $"{UsedItems["Death Trap"]}|{UsedItems["Death Shield"]}";
@@ -132,14 +133,15 @@ class ArchipelagoClient
                 RenderLogin();
                 break;
             default:
-                if (ImGui.Button("Send Death"))
+                if (HasDeathButton && ImGui.Button("Send Death"))
                 {
                     DeathLink.SendDeathLink(new(Slot, "Stupidity"));
                 }
 
                 if (LocationsChecked < MaxLocations)
                 {
-                    ImGui.Text($"Next Check: Death #[{LocationsChecked + 1}] | Total req: {MaxLocations}");
+                    ImGui.Text(
+                        $"Next Check: {LocationsChecked + 1} Total Deaths | Victory: {MaxLocations} Total Deaths");
                 }
                 else
                 {
@@ -167,7 +169,7 @@ class ArchipelagoClient
                 ImGui.EndTable();
                 ImGui.Separator();
                 ImGui.Separator();
-                
+
                 if (ImGui.BeginTable("Death Table", 2, TableFlags))
                 {
                     ImGui.TableSetupColumn("To Blame");
@@ -182,6 +184,7 @@ class ArchipelagoClient
                         ImGui.Text($"{amount}");
                         ImGui.TableNextColumn();
                     }
+
                     ImGui.TableNextRow();
                     ImGui.TableSetColumnIndex(0);
                     ImGui.Text("Total");
@@ -199,6 +202,7 @@ class ArchipelagoClient
                 {
                     ImGui.TextColored(Green, "Safe to close");
                 }
+
                 break;
         }
     }
@@ -217,8 +221,10 @@ class ArchipelagoClient
                 Session = ArchipelagoSessionFactory.CreateSession(Address, Port);
                 DeathLink = Session.CreateDeathLinkService();
 
-                 var result = Session.TryConnectAndLogin(Game, Slot, ItemsHandlingFlags.RemoteItems | ItemsHandlingFlags.IncludeOwnItems, tags: ["DeathLink"],
+                var result = Session.TryConnectAndLogin(Game, Slot,
+                    ItemsHandlingFlags.RemoteItems | ItemsHandlingFlags.IncludeOwnItems, tags: ["DeathLink"],
                     password: Password);
+                
                 DeathLink.OnDeathLinkReceived += OnDeathLink;
 
                 if (!result.Successful)
@@ -227,6 +233,13 @@ class ArchipelagoClient
                     return;
                 }
 
+                if (result is not LoginSuccessful loginSuccessful)
+                {
+                    Error = ["Login was not Successful (idk why)"];
+                    return;
+                }
+
+                SlotData = loginSuccessful.SlotData;
                 OnConnection();
             }
             catch (Exception e)
@@ -247,22 +260,25 @@ class ArchipelagoClient
         File.WriteAllLines("init.txt", [Slot, $"{Port}"]);
 
         Connected++;
-        PlayerInfos = Session.Players.AllPlayers.ToArray();
 
         foreach (var item in Session.Items.AllItemsReceived)
         {
             HeldItems[item.ItemName]++;
         }
 
-        MaxLocations = Session.Locations.AllLocations.Count;
+        PlayerNames = Session.Players.AllPlayers.Select(player => $"{player.Name}").ToArray();
+        
+        MaxLocations = (long) SlotData["death_check_amount"];
         LocationsChecked = Session.Locations.AllLocationsChecked.Count;
+
+        HasDeathButton = (bool) SlotData["has_funny_button"];
         
         var deathCount = Session.DataStorage[Scope.Slot, "Deaths"];
         if (deathCount != "")
         {
             Deaths = JsonConvert.DeserializeObject<Dictionary<string, int>>(deathCount)!;
         }
-        
+
         var used = Session.DataStorage[Scope.Slot, "Used"].To<string>();
         if (used == "") return;
         var usedSplit = used.Split('|').Select(int.Parse).ToArray();
@@ -273,6 +289,12 @@ class ArchipelagoClient
     public void OnDeathLink(DeathLink deathLink)
     {
         var toBlame = deathLink.Source;
+
+        if (!PlayerNames.Contains(toBlame))
+        {
+            toBlame = PlayerNames.First(name => toBlame.EndsWith($" ({name})"));
+        }
+
         Deaths.TryAdd(toBlame, 0);
         Deaths[toBlame]++;
         HasChangedSinceSave = true;
