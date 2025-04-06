@@ -3,17 +3,17 @@ using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
+using Archipelago.MultiClient.Net.Packets;
 using Backbone;
 using ImGuiNET;
 using Newtonsoft.Json;
-using Raylib_cs;
 using static Backbone.Backbone;
 using Color = Raylib_cs.Color;
 
 UserInterface ui = new();
 ui.Loop();
 
-class UserInterface() : Backbone.Backbone("Death Counter", 500, 550)
+class UserInterface() : Backbone.Backbone("DeathLinkipelago", 500, 550)
 {
     public int Counter = 0;
     private ArchipelagoClient Client = new();
@@ -50,7 +50,7 @@ class ArchipelagoClient
     public int Connected = -1;
     public PlayerInfo[] PlayerInfos;
     public bool HasChangedSinceSave;
-    public float SaveCooldown = 10;
+    public float SaveCooldown = 3;
     public float DeathCooldown = 30;
     public long MaxLocations;
     public long LocationsChecked;
@@ -80,11 +80,13 @@ class ArchipelagoClient
 
     public void Update(float deltaTime)
     {
-        if (DeathCooldown < 10)
+        if (Connected == -1) return;
+        CheckChecks();
+        if (DeathCooldown < 3)
         {
             DeathCooldown += deltaTime;
         }
-        else if (HeldItems["Death Trap"] > 0)
+        else if (HeldItems["Death Trap"] - UsedItems["Death Trap"] > 0)
         {
             if (HeldItems["Death Shield"] - UsedItems["Death Shield"] > 0)
             {
@@ -94,6 +96,8 @@ class ArchipelagoClient
             else
             {
                 DeathLink.SendDeathLink(new(Slot, "The Will of God"));
+                Deaths.TryAdd(Slot, 0);
+                Deaths[Slot]++;
                 Console.WriteLine("sent death link");
             }
 
@@ -109,8 +113,8 @@ class ArchipelagoClient
         
         if (!HasChangedSinceSave || SaveCooldown < 30) return;
         HasChangedSinceSave = false;
-        Session.DataStorage["Used"] = $"{UsedItems["Death Trap"]}|{UsedItems["Death Shield"]}";
-        Session.DataStorage["Deaths"] = JsonConvert.SerializeObject(Deaths);
+        Session.DataStorage[Scope.Slot, "Used"] = $"{UsedItems["Death Trap"]}|{UsedItems["Death Shield"]}";
+        Session.DataStorage[Scope.Slot, "Deaths"] = JsonConvert.SerializeObject(Deaths);
         SaveCooldown = 0;
     }
 
@@ -126,9 +130,16 @@ class ArchipelagoClient
                 {
                     DeathLink.SendDeathLink(new(Slot, "Stupidity"));
                 }
-                
-                ImGui.Text($"Next Check: Death #[{LocationsChecked + 1}] | Total req: {MaxLocations}");
-                
+
+                if (LocationsChecked < MaxLocations)
+                {
+                    ImGui.Text($"Next Check: Death #[{LocationsChecked + 1}] | Total req: {MaxLocations}");
+                }
+                else
+                {
+                    ImGui.TextColored(Green, "Victory!");
+                }
+
                 if (ImGui.BeginTable("Item Table", 2, TableFlags))
                 {
                     ImGui.TableSetupColumn("Item");
@@ -137,12 +148,13 @@ class ArchipelagoClient
                     foreach (var (item, amount) in HeldItems)
                     {
                         var trueAmount = amount - UsedItems[item];
-                        if (trueAmount <= 0) continue;
+                        // if (trueAmount <= 0) continue;
                         ImGui.TableNextRow();
                         ImGui.TableSetColumnIndex(0);
                         ImGui.Text(item);
                         ImGui.TableNextColumn();
-                        ImGui.Text($"{trueAmount}");
+                        // ImGui.Text($"{trueAmount}");
+                        ImGui.Text($"{amount} - {UsedItems[item]}");
                         ImGui.TableNextColumn();
                     }
                 }
@@ -240,14 +252,14 @@ class ArchipelagoClient
 
         MaxLocations = Session.Locations.AllLocations.Count;
         LocationsChecked = Session.Locations.AllLocationsChecked.Count;
-
-        var deathCount = Session.DataStorage["Deaths"];
+        
+        var deathCount = Session.DataStorage[Scope.Slot, "Deaths"];
         if (deathCount != "")
         {
             Deaths = JsonConvert.DeserializeObject<Dictionary<string, int>>(deathCount)!;
         }
         
-        var used = Session.DataStorage["Used"].To<string>();
+        var used = Session.DataStorage[Scope.Slot, "Used"].To<string>();
         if (used == "") return;
         var usedSplit = used.Split('|').Select(int.Parse).ToArray();
         UsedItems["Death Trap"] = usedSplit[0];
@@ -257,20 +269,27 @@ class ArchipelagoClient
     public void OnDeathLink(DeathLink deathLink)
     {
         var toBlame = deathLink.Source;
-        if (PlayerInfos.First(player => player.Name == toBlame).Game == Game) return;
         Deaths.TryAdd(toBlame, 0);
         Deaths[toBlame]++;
         HasChangedSinceSave = true;
-        
-        if (LocationsChecked >= MaxLocations) return;
-        if (Deaths.Values.Sum() < LocationsChecked + 1) return;
-        Session.Locations.CompleteLocationChecks(UUID + LocationsChecked);
-        LocationsChecked++;
     }
 
     public void OnItemReceived(ReceivedItemsHelper helper)
     {
         var item = helper.PeekItem();
+        Console.WriteLine($"{item.ItemGame} | {item.ItemName} | {item.ItemDisplayName}");
         HeldItems[item.ItemName]++;
+    }
+
+    public void CheckChecks()
+    {
+        if (LocationsChecked >= MaxLocations) return;
+        if (Deaths.Values.Sum() < LocationsChecked + 1) return;
+        Session.Locations.CompleteLocationChecks(UUID + LocationsChecked);
+        LocationsChecked++;
+        if (LocationsChecked < MaxLocations) return;
+        StatusUpdatePacket status = new();
+        status.Status = ArchipelagoClientState.ClientGoal;
+        Session.Socket.SendPacket(status);
     }
 }
