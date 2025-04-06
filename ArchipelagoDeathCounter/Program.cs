@@ -48,7 +48,7 @@ class ArchipelagoClient
     public int Port = 12345;
     public string[]? Error;
     public int Connected = -1;
-    public PlayerInfo[] PlayerInfos;
+    public PlayerInfo[] PlayerInfos = [];
     public bool HasChangedSinceSave;
     public float SaveCooldown = 3;
     public float DeathCooldown = 30;
@@ -82,6 +82,14 @@ class ArchipelagoClient
     {
         if (Connected == -1) return;
         CheckChecks();
+
+        while (Session.Items.Any())
+        {
+            var item = Session.Items.DequeueItem();
+            Console.WriteLine($"{item.ItemGame} | {item.ItemName} | {item.ItemDisplayName}");
+            HeldItems[item.ItemName]++;
+        }
+        
         if (DeathCooldown < 3)
         {
             DeathCooldown += deltaTime;
@@ -91,14 +99,12 @@ class ArchipelagoClient
             if (HeldItems["Death Shield"] - UsedItems["Death Shield"] > 0)
             {
                 UsedItems["Death Shield"]++;
-                Console.WriteLine("death link blocked");
             }
             else
             {
                 DeathLink.SendDeathLink(new(Slot, "The Will of God"));
                 Deaths.TryAdd(Slot, 0);
                 Deaths[Slot]++;
-                Console.WriteLine("sent death link");
             }
 
             UsedItems["Death Trap"]++;
@@ -148,13 +154,12 @@ class ArchipelagoClient
                     foreach (var (item, amount) in HeldItems)
                     {
                         var trueAmount = amount - UsedItems[item];
-                        // if (trueAmount <= 0) continue;
+                        if (trueAmount <= 0) continue;
                         ImGui.TableNextRow();
                         ImGui.TableSetColumnIndex(0);
                         ImGui.Text(item);
                         ImGui.TableNextColumn();
-                        // ImGui.Text($"{trueAmount}");
-                        ImGui.Text($"{amount} - {UsedItems[item]}");
+                        ImGui.Text($"{trueAmount}");
                         ImGui.TableNextColumn();
                     }
                 }
@@ -212,7 +217,7 @@ class ArchipelagoClient
                 Session = ArchipelagoSessionFactory.CreateSession(Address, Port);
                 DeathLink = Session.CreateDeathLinkService();
 
-                var result = Session.TryConnectAndLogin(Game, Slot, ItemsHandlingFlags.AllItems, tags: ["DeathLink"],
+                 var result = Session.TryConnectAndLogin(Game, Slot, ItemsHandlingFlags.RemoteItems | ItemsHandlingFlags.IncludeOwnItems, tags: ["DeathLink"],
                     password: Password);
                 DeathLink.OnDeathLinkReceived += OnDeathLink;
 
@@ -243,7 +248,6 @@ class ArchipelagoClient
 
         Connected++;
         PlayerInfos = Session.Players.AllPlayers.ToArray();
-        Session.Items.ItemReceived += OnItemReceived;
 
         foreach (var item in Session.Items.AllItemsReceived)
         {
@@ -274,13 +278,6 @@ class ArchipelagoClient
         HasChangedSinceSave = true;
     }
 
-    public void OnItemReceived(ReceivedItemsHelper helper)
-    {
-        var item = helper.PeekItem();
-        Console.WriteLine($"{item.ItemGame} | {item.ItemName} | {item.ItemDisplayName}");
-        HeldItems[item.ItemName]++;
-    }
-
     public void CheckChecks()
     {
         if (LocationsChecked >= MaxLocations) return;
@@ -288,8 +285,10 @@ class ArchipelagoClient
         Session.Locations.CompleteLocationChecks(UUID + LocationsChecked);
         LocationsChecked++;
         if (LocationsChecked < MaxLocations) return;
-        StatusUpdatePacket status = new();
-        status.Status = ArchipelagoClientState.ClientGoal;
+        StatusUpdatePacket status = new()
+        {
+            Status = ArchipelagoClientState.ClientGoal
+        };
         Session.Socket.SendPacket(status);
     }
 }
