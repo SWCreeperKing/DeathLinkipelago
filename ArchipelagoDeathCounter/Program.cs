@@ -2,6 +2,7 @@
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using Backbone;
 using ImGuiNET;
@@ -12,7 +13,7 @@ using Color = Raylib_cs.Color;
 UserInterface ui = new();
 ui.Loop();
 
-class UserInterface() : Backbone.Backbone("DeathLinkipelago", 500, 550)
+class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
 {
     public int Counter = 0;
     private ArchipelagoClient Client = new();
@@ -50,8 +51,6 @@ class ArchipelagoClient
     public bool HasChangedSinceSave;
     public float SaveCooldown = 3;
     public float DeathCooldown = 30;
-    public long MaxLocations;
-    public long LocationsChecked;
     public bool HasDeathButton;
     public string[] PlayerNames = [];
     public Dictionary<string, object> SlotData = [];
@@ -60,17 +59,20 @@ class ArchipelagoClient
 
     public Dictionary<string, int> UsedItems = new()
     {
-        ["The Urge to Die"] = 1,
         ["Death Trap"] = 0,
-        ["Death Shield"] = 0
+        ["Death Shield"] = 0,
+        ["Death Coin"] = 0
     };
 
     public Dictionary<string, int> HeldItems = new()
     {
-        ["The Urge to Die"] = 0,
+        ["Progressive Death Shop"] = 0,
         ["Death Trap"] = 0,
-        ["Death Shield"] = 0
+        ["Death Shield"] = 0,
+        ["Death Coin"] = 0
     };
+
+    public Dictionary<long, ScoutedItemInfo> Locations = [];
 
     public void Init()
     {
@@ -83,7 +85,6 @@ class ArchipelagoClient
     public void Update(float deltaTime)
     {
         if (Connected == -1) return;
-        CheckChecks();
 
         while (Session.Items.Any())
         {
@@ -95,9 +96,9 @@ class ArchipelagoClient
         {
             DeathCooldown += deltaTime;
         }
-        else if (HeldItems["Death Trap"] - UsedItems["Death Trap"] > 0)
+        else if (GetItemAmount("Death Trap") > 0)
         {
-            if (HeldItems["Death Shield"] - UsedItems["Death Shield"] > 0)
+            if (GetItemAmount("Death Shield") > 0)
             {
                 UsedItems["Death Shield"]++;
             }
@@ -120,7 +121,8 @@ class ArchipelagoClient
 
         if (!HasChangedSinceSave || SaveCooldown < 30) return;
         HasChangedSinceSave = false;
-        Session.DataStorage[Scope.Slot, "Used"] = $"{UsedItems["Death Trap"]}|{UsedItems["Death Shield"]}";
+        Session.DataStorage[Scope.Slot, "Used"] =
+            $"{UsedItems["Death Trap"]}|{UsedItems["Death Shield"]}|{UsedItems["Death Coin"]}";
         Session.DataStorage[Scope.Slot, "Deaths"] = JsonConvert.SerializeObject(Deaths);
         SaveCooldown = 0;
     }
@@ -138,37 +140,52 @@ class ArchipelagoClient
                     DeathLink.SendDeathLink(new(Slot, "Stupidity"));
                 }
 
-                if (LocationsChecked < MaxLocations)
+                if (HasChangedSinceSave && SaveCooldown < 30)
                 {
-                    ImGui.Text(
-                        $"Next Check: {LocationsChecked + 1} Total Deaths | Victory: {MaxLocations} Total Deaths");
+                    ImGui.TextColored(Red, "HAS NOT SAVED! DO NOT CLOSE");
+                }
+                else
+                {
+                    ImGui.TextColored(Green, "Safe to close");
+                }
+
+                if (Locations.Count != 0)
+                {
+                    ImGui.Text($"Victory: {Locations.Count} Remaining");
                 }
                 else
                 {
                     ImGui.TextColored(Green, "Victory!");
                 }
 
-                if (ImGui.BeginTable("Item Table", 2, TableFlags))
+                ImGui.NewLine();
+
+                if (ImGui.BeginTable("Item Table", 4, TableFlags))
                 {
                     ImGui.TableSetupColumn("Item");
-                    ImGui.TableSetupColumn("Amount");
+                    ImGui.TableSetupColumn("Available");
+                    ImGui.TableSetupColumn("Used");
+                    ImGui.TableSetupColumn("Total");
                     ImGui.TableHeadersRow();
                     foreach (var (item, amount) in HeldItems)
                     {
+                        if (item == "Progressive Death Shop") continue;
                         var trueAmount = amount - UsedItems[item];
-                        if (trueAmount <= 0) continue;
                         ImGui.TableNextRow();
                         ImGui.TableSetColumnIndex(0);
                         ImGui.Text(item);
                         ImGui.TableNextColumn();
                         ImGui.Text($"{trueAmount}");
                         ImGui.TableNextColumn();
+                        ImGui.Text($"{UsedItems[item]}");
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{HeldItems[item]}");
+                        ImGui.TableNextColumn();
                     }
                 }
 
                 ImGui.EndTable();
-                ImGui.Separator();
-                ImGui.Separator();
+                ImGui.NewLine();
 
                 if (ImGui.BeginTable("Death Table", 2, TableFlags))
                 {
@@ -193,16 +210,38 @@ class ArchipelagoClient
                 }
 
                 ImGui.EndTable();
+                ImGui.NewLine();
 
-                if (HasChangedSinceSave && SaveCooldown < 30)
+                if (ImGui.BeginTable("Shop Table", 4, TableFlags | ImGuiTableFlags.SizingFixedFit))
                 {
-                    ImGui.TextColored(Red, "HAS NOT SAVED! DO NOT CLOSE");
-                }
-                else
-                {
-                    ImGui.TextColored(Green, "Safe to close");
+                    ImGui.TableSetupColumn("Loc");
+                    ImGui.TableSetupColumn("Item");
+                    ImGui.TableSetupColumn("For");
+                    ImGui.TableSetupColumn("Buy");
+                    ImGui.TableHeadersRow();
+                    foreach (var (id, location) in Locations)
+                    {
+                        if (id >= (HeldItems["Progressive Death Shop"] + 1) * 10) break;
+                        ImGui.TableNextRow();
+                        ImGui.TableSetColumnIndex(0);
+                        ImGui.Text($" Item {id + 1} ");
+                        ImGui.TableNextColumn();
+                        ImGui.Text($" {location.ItemName} ".Replace("Trap", "Shield"));
+                        ImGui.TableNextColumn();
+                        ImGui.Text($" {location.Player.Name} ");
+                        ImGui.TableNextColumn();
+
+                        if (ImGui.Button($"Buy Item {id + 1}"))
+                        {
+                            BuyCheck(id);
+                        }
+                        
+                        ImGui.TableNextColumn();
+                    }
                 }
 
+                ImGui.EndTable();
+                
                 break;
         }
     }
@@ -224,7 +263,7 @@ class ArchipelagoClient
                 var result = Session.TryConnectAndLogin(Game, Slot,
                     ItemsHandlingFlags.RemoteItems | ItemsHandlingFlags.IncludeOwnItems, tags: ["DeathLink"],
                     password: Password);
-                
+
                 DeathLink.OnDeathLinkReceived += OnDeathLink;
 
                 if (!result.Successful)
@@ -261,22 +300,32 @@ class ArchipelagoClient
 
         Connected++;
 
-        foreach (var item in Session.Items.AllItemsReceived)
-        {
-            HeldItems[item.ItemName]++;
-        }
-
         PlayerNames = Session.Players.AllPlayers.Select(player => $"{player.Name}").ToArray();
-        
-        MaxLocations = (long) SlotData["death_check_amount"];
-        LocationsChecked = Session.Locations.AllLocationsChecked.Count;
 
-        HasDeathButton = (bool) SlotData["has_funny_button"];
+        var missing = Session.Locations.AllMissingLocations.ToArray();
+        var scoutedLocations = Session.Locations.ScoutLocationsAsync(missing).Result!;
+
+        foreach (var (id, location) in scoutedLocations.OrderBy(loc => loc.Key))
+        {
+            Locations[id - UUID] = location;
+        }
         
+        HasDeathButton = (bool)SlotData["has_funny_button"];
+
         var deathCount = Session.DataStorage[Scope.Slot, "Deaths"];
         if (deathCount != "")
         {
             Deaths = JsonConvert.DeserializeObject<Dictionary<string, int>>(deathCount)!;
+            HeldItems["Death Coin"] = Deaths.Values.Sum();
+        }
+
+        if (scoutedLocations.Count == 0)
+        {
+            StatusUpdatePacket status = new()
+            {
+                Status = ArchipelagoClientState.ClientGoal
+            };
+            Session.Socket.SendPacket(status);
         }
 
         var used = Session.DataStorage[Scope.Slot, "Used"].To<string>();
@@ -284,6 +333,7 @@ class ArchipelagoClient
         var usedSplit = used.Split('|').Select(int.Parse).ToArray();
         UsedItems["Death Trap"] = usedSplit[0];
         UsedItems["Death Shield"] = usedSplit[1];
+        UsedItems["Death Coin"] = usedSplit[2];
     }
 
     public void OnDeathLink(DeathLink deathLink)
@@ -297,20 +347,28 @@ class ArchipelagoClient
 
         Deaths.TryAdd(toBlame, 0);
         Deaths[toBlame]++;
+        HeldItems["Death Coin"]++;
         HasChangedSinceSave = true;
     }
 
-    public void CheckChecks()
+    public void BuyCheck(long id)
     {
-        if (LocationsChecked >= MaxLocations) return;
-        if (Deaths.Values.Sum() < LocationsChecked + 1) return;
-        Session.Locations.CompleteLocationChecks(UUID + LocationsChecked);
-        LocationsChecked++;
-        if (LocationsChecked < MaxLocations) return;
+        if (Locations.Count == 0) return;
+        if (GetItemAmount("Death Coin") < 1) return;
+
+        var item = Locations[id];
+        Session.Locations.CompleteLocationChecks(item.LocationId);
+        Locations.Remove(id);
+        UsedItems["Death Coin"]++;
+
+        HasChangedSinceSave = true;
+        if (Locations.Count != 0) return;
         StatusUpdatePacket status = new()
         {
             Status = ArchipelagoClientState.ClientGoal
         };
         Session.Socket.SendPacket(status);
     }
+
+    public int GetItemAmount(string item) => HeldItems[item] - UsedItems[item];
 }
