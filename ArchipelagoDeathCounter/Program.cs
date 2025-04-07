@@ -152,7 +152,7 @@ public class ArchipelagoClient
                 ImGui.Text($"Last recorded death link was from: [{LastPersonToBlame}]");
                 
                 ImGui.NewLine();
-                RenderDeathTable();
+                RenderShopTable();
 
                 break;
         }

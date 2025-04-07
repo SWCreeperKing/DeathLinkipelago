@@ -1,3 +1,8 @@
+# v.0.7.1hf
+
+---
+- [Client] Fixed rendering death table twice (oops)
+
 # v.0.7
 
 ---
