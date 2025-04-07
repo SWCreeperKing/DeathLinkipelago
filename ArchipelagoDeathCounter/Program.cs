@@ -226,7 +226,7 @@ class ArchipelagoClient
                         ImGui.TableSetColumnIndex(0);
                         ImGui.Text($" Item {id + 1} ");
                         ImGui.TableNextColumn();
-                        ImGui.Text($" {location.ItemName} ".Replace("Trap", "Shield"));
+                        ImGui.Text($" {location.ItemName} ".Replace("Trap", "Sheild"));
                         ImGui.TableNextColumn();
                         ImGui.Text($" {location.Player.Name} ");
                         ImGui.TableNextColumn();
