@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Text;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
@@ -41,6 +42,9 @@ class ArchipelagoClient
 
     public Vector4 Red = Color.Red.ToV4();
     public Vector4 Green = Color.Green.ToV4();
+    public Vector4 Gold = Color.Gold.ToV4();
+    public Vector4 Blue = Color.Blue.ToV4();
+    public Vector4 SkyBlue = Color.SkyBlue.ToV4();
     public string Address = "archipelago.gg";
     public string Password = "";
     public string Slot = "Slot";
@@ -53,6 +57,9 @@ class ArchipelagoClient
     public float DeathCooldown = 30;
     public bool HasDeathButton;
     public string[] PlayerNames = [];
+    public float TimeSinceLastDeath;
+    public float LongestTimeSinceLastDeath;
+    public string LastPersonToBlame = "N/A";
     public Dictionary<string, object> SlotData = [];
 
     public Dictionary<string, int> Deaths = [];
@@ -86,6 +93,7 @@ class ArchipelagoClient
     {
         if (Connected == -1) return;
 
+        TimeSinceLastDeath += deltaTime;
         while (Session.Items.Any())
         {
             var item = Session.Items.DequeueItem();
@@ -104,9 +112,12 @@ class ArchipelagoClient
             }
             else
             {
-                DeathLink.SendDeathLink(new(Slot, "The Will of God"));
-                Deaths.TryAdd(Slot, 0);
-                Deaths[Slot]++;
+                if (Locations.Count != 0)
+                {
+                    DeathLink.SendDeathLink(new(Slot, "The Will of God"));
+                }
+
+                AddDeath(Slot);
             }
 
             UsedItems["Death Trap"]++;
@@ -210,6 +221,9 @@ class ArchipelagoClient
                 }
 
                 ImGui.EndTable();
+                ImGui.Text($"Time since last death: [{GetTime(TimeSinceLastDeath)}]");
+                ImGui.Text($"Longest Time since last death: [{GetTime(Math.Max(LongestTimeSinceLastDeath, TimeSinceLastDeath))}]");
+                ImGui.Text($"Last recorded death link was from: [{LastPersonToBlame}]");
                 ImGui.NewLine();
 
                 if (ImGui.BeginTable("Shop Table", 4, TableFlags | ImGuiTableFlags.SizingFixedFit))
@@ -226,7 +240,7 @@ class ArchipelagoClient
                         ImGui.TableSetColumnIndex(0);
                         ImGui.Text($" Item {id + 1} ");
                         ImGui.TableNextColumn();
-                        ImGui.Text($" {location.ItemName} ".Replace("Trap", "Sheild"));
+                        ImGui.TextColored(GetItemColor(location), $" {location.ItemName} ".Replace("Trap", "Sheild"));
                         ImGui.TableNextColumn();
                         ImGui.Text($" {location.Player.Name} ");
                         ImGui.TableNextColumn();
@@ -235,13 +249,13 @@ class ArchipelagoClient
                         {
                             BuyCheck(id);
                         }
-                        
+
                         ImGui.TableNextColumn();
                     }
                 }
 
                 ImGui.EndTable();
-                
+
                 break;
         }
     }
@@ -309,7 +323,7 @@ class ArchipelagoClient
         {
             Locations[id - UUID] = location;
         }
-        
+
         HasDeathButton = (bool)SlotData["has_funny_button"];
 
         var deathCount = Session.DataStorage[Scope.Slot, "Deaths"];
@@ -345,12 +359,20 @@ class ArchipelagoClient
             toBlame = PlayerNames.First(name => toBlame.EndsWith($" ({name})"));
         }
 
-        Deaths.TryAdd(toBlame, 0);
-        Deaths[toBlame]++;
-        HeldItems["Death Coin"]++;
-        HasChangedSinceSave = true;
+        AddDeath(toBlame);
     }
 
+    public void AddDeath(string slot)
+    {
+        LastPersonToBlame = slot;
+        Deaths.TryAdd(slot, 0);
+        Deaths[slot]++;
+        HeldItems["Death Coin"]++;
+        LongestTimeSinceLastDeath = Math.Max(LongestTimeSinceLastDeath, TimeSinceLastDeath);
+        TimeSinceLastDeath = 0;
+        HasChangedSinceSave = true;
+    }
+    
     public void BuyCheck(long id)
     {
         if (Locations.Count == 0) return;
@@ -371,4 +393,28 @@ class ArchipelagoClient
     }
 
     public int GetItemAmount(string item) => HeldItems[item] - UsedItems[item];
+
+    public string GetTime(float time)
+    {
+        var sec = time % 60;
+        time = (float)Math.Floor(time / 60f);
+        var min = time % 60;
+        time = (float)Math.Floor(time / 60f);
+        var hour = time % 24;
+        var days = (float)Math.Floor(time / 24f);
+        
+        StringBuilder sb = new();
+        if (days > 0) sb.Append(days).Append("d ");
+        if (hour > 0) sb.Append(hour).Append("hr ");
+        if (min > 0) sb.Append(min).Append("m ");
+        if (sec > 0) sb.Append($"{sec:#0.00}").Append("s ");
+        return sb.ToString().TrimEnd();
+    }
+
+    public Vector4 GetItemColor(ScoutedItemInfo item)
+    {
+        if (item.Flags.HasFlag(ItemFlags.Advancement)) return Gold;
+        if (item.Flags.HasFlag(ItemFlags.Trap) || item.Flags.HasFlag(ItemFlags.NeverExclude)) return Blue;
+        return SkyBlue;
+    }
 }

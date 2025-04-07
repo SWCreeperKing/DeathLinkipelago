@@ -1,8 +1,18 @@
+# v.0.6
+
+---
+- [APWorld] Renamed `DeathLinkipelago Death Shop` to `Death Shop`
+- [Client] Fixed not receiving a `Death Coin` when sending a death link
+- [Client] Added a time since last death and a longest time since last death (neither are saved)
+- [Client] Tattletales on the last person that sent a death link
+- [Client] No longer sends death links from traps if goaled
+- [Client] Added colors for items
+
 # v.0.5.2hf
 
 ---
 - [APWorld] ACTUALLY Fixed (like frfr this time) location access rules
-- [Client] disguesed traps a tiny amount
+- [Client] Disguised traps a tiny amount
 
 # v.0.5.1hf
 
