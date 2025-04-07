@@ -1,3 +1,12 @@
+# v.0.7
+
+---
+- [Yaml] Added `send_traps_after_goal` yaml setting
+- [Client] Removed some extra padding in the death table
+- [Client] Fixed cases where games (*cough cough* ror2 *cough cough*) use neither the slot name or a slot name's alias when sending a death link
+- [Client] Set target FPS to 30 instead of 60
+- [Client] Will send death links from traps if goaled if `send_traps_after_goal` is true
+
 # v.0.6
 
 ---

@@ -1,13 +1,11 @@
 ﻿using System.Numerics;
 using System.Text;
-using Archipelago.MultiClient.Net;
-using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
-using Archipelago.MultiClient.Net.Packets;
+using ArchipelagoDeathCounter;
 using Backbone;
 using ImGuiNET;
-using Newtonsoft.Json;
+using Raylib_cs;
 using static Backbone.Backbone;
 using Color = Raylib_cs.Color;
 
@@ -20,7 +18,11 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
     private ArchipelagoClient Client = new();
     private long LastUpdate = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-    public override void Init() { Client.Init(); }
+    public override void Init()
+    {
+        Raylib.SetTargetFPS(30);
+        Client.Init();
+    }
 
     public override void Update()
     {
@@ -30,97 +32,64 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
         LastUpdate = nextUpdate;
     }
 
-    public override void Render() { Client.Render(); }
+    public override void Render()
+    {
+        Client.Render();
+    }
 }
 
-class ArchipelagoClient
+public class ArchipelagoClient
 {
     public const long UUID = 0x0AF5F0AC;
 
-    public ArchipelagoSession Session;
-    public DeathLinkService DeathLink;
-
+    public APConnection Connection = new();
     public Vector4 Red = Color.Red.ToV4();
     public Vector4 Green = Color.Green.ToV4();
     public Vector4 Gold = Color.Gold.ToV4();
     public Vector4 Blue = Color.Blue.ToV4();
     public Vector4 SkyBlue = Color.SkyBlue.ToV4();
-    public string Address = "archipelago.gg";
-    public string Password = "";
-    public string Slot = "Slot";
-    public string Game = "DeathLinkipelago";
-    public int Port = 12345;
     public string[]? Error;
-    public int Connected = -1;
-    public bool HasChangedSinceSave;
+    public string[] PlayerNames = [];
+    public string LastPersonToBlame = "N/A";
     public float SaveCooldown = 3;
     public float DeathCooldown = 30;
-    public bool HasDeathButton;
-    public string[] PlayerNames = [];
     public float TimeSinceLastDeath;
     public float LongestTimeSinceLastDeath;
-    public string LastPersonToBlame = "N/A";
-    public Dictionary<string, object> SlotData = [];
-
+    public bool HasChangedSinceSave;
+    public bool HasDeathButton;
+    public bool SendTrapsAfterGoal;
+    
     public Dictionary<string, int> Deaths = [];
 
-    public Dictionary<string, int> UsedItems = new()
-    {
-        ["Death Trap"] = 0,
-        ["Death Shield"] = 0,
-        ["Death Coin"] = 0
-    };
-
-    public Dictionary<string, int> HeldItems = new()
-    {
-        ["Progressive Death Shop"] = 0,
-        ["Death Trap"] = 0,
-        ["Death Shield"] = 0,
-        ["Death Coin"] = 0
-    };
-
-    public Dictionary<long, ScoutedItemInfo> Locations = [];
-
-    public void Init()
-    {
-        if (!File.Exists("init.txt")) return;
-        var file = File.ReadAllText("init.txt").Replace("\r", "").Split('\n');
-        Slot = file[0];
-        Port = int.TryParse(file[1], out var port) ? port : Port;
-    }
+    public void Init() { Connection.LoadInitData(); }
 
     public void Update(float deltaTime)
     {
-        if (Connected == -1) return;
+        if (Connection.Connected == -1) return;
 
         TimeSinceLastDeath += deltaTime;
-        while (Session.Items.Any())
-        {
-            var item = Session.Items.DequeueItem();
-            HeldItems[item.ItemName]++;
-        }
 
         if (DeathCooldown < 3)
         {
             DeathCooldown += deltaTime;
         }
-        else if (GetItemAmount("Death Trap") > 0)
+        else if (Connection.GetItemAmount("Death Trap") > 0)
         {
-            if (GetItemAmount("Death Shield") > 0)
+            if (Connection.GetItemAmount("Death Shield") > 0)
             {
-                UsedItems["Death Shield"]++;
+                Connection.UsedItems["Death Shield"]++;
             }
             else
             {
-                if (Locations.Count != 0)
+                if (Connection.Locations.Count != 0 || SendTrapsAfterGoal)
                 {
-                    DeathLink.SendDeathLink(new(Slot, "The Will of God"));
+                    Connection.SendDeathLink("The Will of God");
                 }
 
-                AddDeath(Slot);
+                AddDeath(Connection.Slot);
             }
 
-            UsedItems["Death Trap"]++;
+            Connection.UsedItems["Death Trap"]++;
             HasChangedSinceSave = true;
             DeathCooldown = 0;
         }
@@ -132,15 +101,13 @@ class ArchipelagoClient
 
         if (!HasChangedSinceSave || SaveCooldown < 30) return;
         HasChangedSinceSave = false;
-        Session.DataStorage[Scope.Slot, "Used"] =
-            $"{UsedItems["Death Trap"]}|{UsedItems["Death Shield"]}|{UsedItems["Death Coin"]}";
-        Session.DataStorage[Scope.Slot, "Deaths"] = JsonConvert.SerializeObject(Deaths);
+        Connection.SaveData(Deaths);
         SaveCooldown = 0;
     }
 
     public void Render()
     {
-        switch (Connected)
+        switch (Connection.Connected)
         {
             case -1:
                 RenderLogin();
@@ -148,7 +115,7 @@ class ArchipelagoClient
             default:
                 if (HasDeathButton && ImGui.Button("Send Death"))
                 {
-                    DeathLink.SendDeathLink(new(Slot, "Stupidity"));
+                    Connection.SendDeathLink("Stupidity");
                 }
 
                 if (HasChangedSinceSave && SaveCooldown < 30)
@@ -160,9 +127,14 @@ class ArchipelagoClient
                     ImGui.TextColored(Green, "Safe to close");
                 }
 
-                if (Locations.Count != 0)
+                if (ImGui.Button("Gain Coin"))
                 {
-                    ImGui.Text($"Victory: {Locations.Count} Remaining");
+                    Connection.HeldItems["Death Coin"]++;
+                }
+
+                if (Connection.Locations.Count != 0)
+                {
+                    ImGui.Text($"Victory: {Connection.Locations.Count} Remaining");
                 }
                 else
                 {
@@ -170,91 +142,17 @@ class ArchipelagoClient
                 }
 
                 ImGui.NewLine();
-
-                if (ImGui.BeginTable("Item Table", 4, TableFlags))
-                {
-                    ImGui.TableSetupColumn("Item");
-                    ImGui.TableSetupColumn("Available");
-                    ImGui.TableSetupColumn("Used");
-                    ImGui.TableSetupColumn("Total");
-                    ImGui.TableHeadersRow();
-                    foreach (var (item, amount) in HeldItems)
-                    {
-                        if (item == "Progressive Death Shop") continue;
-                        var trueAmount = amount - UsedItems[item];
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
-                        ImGui.Text(item);
-                        ImGui.TableNextColumn();
-                        ImGui.Text($"{trueAmount}");
-                        ImGui.TableNextColumn();
-                        ImGui.Text($"{UsedItems[item]}");
-                        ImGui.TableNextColumn();
-                        ImGui.Text($"{HeldItems[item]}");
-                        ImGui.TableNextColumn();
-                    }
-                }
-
-                ImGui.EndTable();
+                RenderItemTable();
                 ImGui.NewLine();
-
-                if (ImGui.BeginTable("Death Table", 2, TableFlags))
-                {
-                    ImGui.TableSetupColumn("To Blame");
-                    ImGui.TableSetupColumn("Amount");
-                    ImGui.TableHeadersRow();
-                    foreach (var (blame, amount) in Deaths)
-                    {
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
-                        ImGui.Text(blame);
-                        ImGui.TableNextColumn();
-                        ImGui.Text($"{amount}");
-                        ImGui.TableNextColumn();
-                    }
-
-                    ImGui.TableNextRow();
-                    ImGui.TableSetColumnIndex(0);
-                    ImGui.Text("Total");
-                    ImGui.TableNextColumn();
-                    ImGui.Text($"{Deaths.Values.Sum()}");
-                }
-
-                ImGui.EndTable();
+                RenderDeathTable();
+                
                 ImGui.Text($"Time since last death: [{GetTime(TimeSinceLastDeath)}]");
-                ImGui.Text($"Longest Time since last death: [{GetTime(Math.Max(LongestTimeSinceLastDeath, TimeSinceLastDeath))}]");
+                ImGui.Text(
+                    $"Longest Time since last death: [{GetTime(Math.Max(LongestTimeSinceLastDeath, TimeSinceLastDeath))}]");
                 ImGui.Text($"Last recorded death link was from: [{LastPersonToBlame}]");
+                
                 ImGui.NewLine();
-
-                if (ImGui.BeginTable("Shop Table", 4, TableFlags | ImGuiTableFlags.SizingFixedFit))
-                {
-                    ImGui.TableSetupColumn("Loc");
-                    ImGui.TableSetupColumn("Item");
-                    ImGui.TableSetupColumn("For");
-                    ImGui.TableSetupColumn("Buy");
-                    ImGui.TableHeadersRow();
-                    foreach (var (id, location) in Locations)
-                    {
-                        if (id >= (HeldItems["Progressive Death Shop"] + 1) * 10) break;
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
-                        ImGui.Text($" Item {id + 1} ");
-                        ImGui.TableNextColumn();
-                        ImGui.TextColored(GetItemColor(location), $" {location.ItemName} ".Replace("Trap", "Sheild"));
-                        ImGui.TableNextColumn();
-                        ImGui.Text($" {location.Player.Name} ");
-                        ImGui.TableNextColumn();
-
-                        if (ImGui.Button($"Buy Item {id + 1}"))
-                        {
-                            BuyCheck(id);
-                        }
-
-                        ImGui.TableNextColumn();
-                    }
-                }
-
-                ImGui.EndTable();
+                RenderDeathTable();
 
                 break;
         }
@@ -262,43 +160,13 @@ class ArchipelagoClient
 
     public void RenderLogin()
     {
-        ImGui.InputText("Address", ref Address, 255);
-        ImGui.InputInt("Port", ref Port);
-        ImGui.InputText("Password", ref Password, 255);
-        ImGui.InputText("Slot", ref Slot, 255);
+        ImGui.InputText("Address", ref Connection.Address, 255);
+        ImGui.InputInt("Port", ref Connection.Port);
+        ImGui.InputText("Password", ref Connection.Password, 255);
+        ImGui.InputText("Slot", ref Connection.Slot, 255);
         if (ImGui.Button("Connect"))
         {
-            Error = null;
-            try
-            {
-                Session = ArchipelagoSessionFactory.CreateSession(Address, Port);
-                DeathLink = Session.CreateDeathLinkService();
-
-                var result = Session.TryConnectAndLogin(Game, Slot,
-                    ItemsHandlingFlags.RemoteItems | ItemsHandlingFlags.IncludeOwnItems, tags: ["DeathLink"],
-                    password: Password);
-
-                DeathLink.OnDeathLinkReceived += OnDeathLink;
-
-                if (!result.Successful)
-                {
-                    Error = ((LoginFailure)result).Errors;
-                    return;
-                }
-
-                if (result is not LoginSuccessful loginSuccessful)
-                {
-                    Error = ["Login was not Successful (idk why)"];
-                    return;
-                }
-
-                SlotData = loginSuccessful.SlotData;
-                OnConnection();
-            }
-            catch (Exception e)
-            {
-                Error = new LoginFailure(e.GetBaseException().Message).Errors;
-            }
+            Error = Connection.TryConnect(this);
         }
 
         if (Error is null) return;
@@ -308,93 +176,112 @@ class ArchipelagoClient
         }
     }
 
-    public void OnConnection()
+    public void RenderItemTable()
     {
-        File.WriteAllLines("init.txt", [Slot, $"{Port}"]);
-
-        Connected++;
-
-        PlayerNames = Session.Players.AllPlayers.Select(player => $"{player.Name}").ToArray();
-
-        var missing = Session.Locations.AllMissingLocations.ToArray();
-        var scoutedLocations = Session.Locations.ScoutLocationsAsync(missing).Result!;
-
-        foreach (var (id, location) in scoutedLocations.OrderBy(loc => loc.Key))
+        if (ImGui.BeginTable("Item Table", 4, TableFlags))
         {
-            Locations[id - UUID] = location;
-        }
-
-        HasDeathButton = (bool)SlotData["has_funny_button"];
-
-        var deathCount = Session.DataStorage[Scope.Slot, "Deaths"];
-        if (deathCount != "")
-        {
-            Deaths = JsonConvert.DeserializeObject<Dictionary<string, int>>(deathCount)!;
-            HeldItems["Death Coin"] = Deaths.Values.Sum();
-        }
-
-        if (scoutedLocations.Count == 0)
-        {
-            StatusUpdatePacket status = new()
+            ImGui.TableSetupColumn("Item");
+            ImGui.TableSetupColumn("Available");
+            ImGui.TableSetupColumn("Used");
+            ImGui.TableSetupColumn("Total");
+            ImGui.TableHeadersRow();
+            foreach (var (item, amount) in Connection.HeldItems)
             {
-                Status = ArchipelagoClientState.ClientGoal
-            };
-            Session.Socket.SendPacket(status);
+                if (item == "Progressive Death Shop") continue;
+                var trueAmount = amount - Connection.UsedItems[item];
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text(item);
+                ImGui.TableNextColumn();
+                ImGui.Text($"{trueAmount}");
+                ImGui.TableNextColumn();
+                ImGui.Text($"{Connection.UsedItems[item]}");
+                ImGui.TableNextColumn();
+                ImGui.Text($"{Connection.HeldItems[item]}");
+                ImGui.TableNextColumn();
+            }
         }
 
-        var used = Session.DataStorage[Scope.Slot, "Used"].To<string>();
-        if (used == "") return;
-        var usedSplit = used.Split('|').Select(int.Parse).ToArray();
-        UsedItems["Death Trap"] = usedSplit[0];
-        UsedItems["Death Shield"] = usedSplit[1];
-        UsedItems["Death Coin"] = usedSplit[2];
+        ImGui.EndTable();
     }
 
-    public void OnDeathLink(DeathLink deathLink)
+    public void RenderDeathTable()
     {
-        var toBlame = deathLink.Source;
-
-        if (!PlayerNames.Contains(toBlame))
+        if (ImGui.BeginTable("Death Table", 2, TableFlags))
         {
-            toBlame = PlayerNames.First(name => toBlame.EndsWith($" ({name})"));
+            ImGui.TableSetupColumn("To Blame");
+            ImGui.TableSetupColumn("Amount");
+            ImGui.TableHeadersRow();
+            foreach (var (blame, amount) in Deaths)
+            {
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text(blame);
+                ImGui.TableNextColumn();
+                ImGui.Text($"{amount}");
+                ImGui.TableNextColumn();
+            }
+
+            ImGui.TableNextRow();
+            ImGui.TableSetColumnIndex(0);
+            ImGui.Text("Total");
+            ImGui.TableNextColumn();
+            ImGui.Text($"{Deaths.Values.Sum()}");
         }
 
-        AddDeath(toBlame);
+        ImGui.EndTable();
     }
 
+    public void RenderShopTable()
+    {
+        if (ImGui.BeginTable("Shop Table", 4, TableFlags | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGui.TableSetupColumn("Loc");
+            ImGui.TableSetupColumn("Item");
+            ImGui.TableSetupColumn("For");
+            ImGui.TableSetupColumn("Buy");
+            ImGui.TableHeadersRow();
+            foreach (var (id, location) in Connection.Locations)
+            {
+                if (id >= (Connection.HeldItems["Progressive Death Shop"] + 1) * 10) break;
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text($"Item {id + 1} ");
+                ImGui.TableNextColumn();
+                ImGui.TextColored(GetItemColor(location), $"{location.ItemName} ".Replace("Trap", "Sheild"));
+                ImGui.TableNextColumn();
+                ImGui.Text($"{location.Player.Name} ");
+                ImGui.TableNextColumn();
+
+                if (ImGui.Button($"Buy Item {id + 1}"))
+                {
+                    Connection.BuyCheck(id, this);
+                }
+
+                ImGui.TableNextColumn();
+            }
+        }
+
+        ImGui.EndTable();
+    }
+    
     public void AddDeath(string slot)
     {
+        if (!PlayerNames.Contains(slot))
+        {
+            slot = PlayerNames.FirstOrDefault(name => slot.EndsWith($" ({name})"), slot);
+        }
+
         LastPersonToBlame = slot;
         Deaths.TryAdd(slot, 0);
         Deaths[slot]++;
-        HeldItems["Death Coin"]++;
+        Connection.HeldItems["Death Coin"]++;
         LongestTimeSinceLastDeath = Math.Max(LongestTimeSinceLastDeath, TimeSinceLastDeath);
         TimeSinceLastDeath = 0;
         HasChangedSinceSave = true;
     }
-    
-    public void BuyCheck(long id)
-    {
-        if (Locations.Count == 0) return;
-        if (GetItemAmount("Death Coin") < 1) return;
 
-        var item = Locations[id];
-        Session.Locations.CompleteLocationChecks(item.LocationId);
-        Locations.Remove(id);
-        UsedItems["Death Coin"]++;
-
-        HasChangedSinceSave = true;
-        if (Locations.Count != 0) return;
-        StatusUpdatePacket status = new()
-        {
-            Status = ArchipelagoClientState.ClientGoal
-        };
-        Session.Socket.SendPacket(status);
-    }
-
-    public int GetItemAmount(string item) => HeldItems[item] - UsedItems[item];
-
-    public string GetTime(float time)
+    public string GetTime(double time)
     {
         var sec = time % 60;
         time = (float)Math.Floor(time / 60f);
@@ -402,7 +289,7 @@ class ArchipelagoClient
         time = (float)Math.Floor(time / 60f);
         var hour = time % 24;
         var days = (float)Math.Floor(time / 24f);
-        
+
         StringBuilder sb = new();
         if (days > 0) sb.Append(days).Append("d ");
         if (hour > 0) sb.Append(hour).Append("hr ");
