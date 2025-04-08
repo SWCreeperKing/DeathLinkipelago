@@ -1,3 +1,12 @@
+# v.0.8
+
+---
+- [Client] Added shop level (how many `Progressive Death Shops` you have)
+- [Client] Added a console use the `~` key to toggle it, use the `help` command for a list of commands
+- [Client] Fixed counting death from `Death Trap`s twice
+- [Client] Fixed possibly major location breaking bug?
+- [Client] Hides buy buttons when you don't have any coins 
+
 # v.0.7.2hf
 
 ---

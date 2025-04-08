@@ -3,6 +3,7 @@ using Archipelago.MultiClient.Net.Converters;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Packets;
+using ArchipelagoDeathCounter.LoggerConsole;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -39,7 +40,7 @@ public class APConnection
     {
         Session.DataStorage[Scope.Slot, "Used"] =
             $"{UsedItems["Death Trap"]}|{UsedItems["Death Shield"]}|{UsedItems["Death Coin"]}";
-        Session.DataStorage[Scope.Slot, "Deaths"] = JsonConvert.SerializeObject(deaths);
+        Session.DataStorage[Scope.Slot, "Deaths"] = JObject.FromObject(deaths);
     }
 
     public void LoadInitData()
@@ -106,37 +107,13 @@ public class APConnection
     public void OnConnection(ArchipelagoClient apClient)
     {
         File.WriteAllLines("init.txt", [Slot, $"{Port}"]);
-
         Connected++;
 
         apClient.PlayerNames = Session.Players.AllPlayers.Select(player => $"{player.Name}").ToArray();
-
-        var missing = Session.Locations.AllMissingLocations.ToArray();
-        var scoutedLocations = Session.Locations.ScoutLocationsAsync(missing).Result!;
-
-        foreach (var (id, location) in scoutedLocations.OrderBy(loc => loc.Key))
-        {
-            Locations[id - ArchipelagoClient.UUID] = location;
-        }
-
         apClient.HasDeathButton = (bool)SlotData["has_funny_button"];
         apClient.SendTrapsAfterGoal = (bool)SlotData["send_traps_after_goal"];
 
-        var deathCount = Session.DataStorage[Scope.Slot, "Deaths"];
-        if (deathCount != "")
-        {
-            apClient.Deaths = JsonConvert.DeserializeObject<Dictionary<string, int>>(deathCount)!;
-            HeldItems["Death Coin"] = apClient.Deaths.Values.Sum();
-        }
-
-        if (scoutedLocations.Count == 0)
-        {
-            StatusUpdatePacket status = new()
-            {
-                Status = ArchipelagoClientState.ClientGoal
-            };
-            Session.Socket.SendPacket(status);
-        }
+        ReloadLocations();
 
         Session.Socket.PacketReceived += packet =>
         {
@@ -145,8 +122,24 @@ public class APConnection
             var source = bouncedPacket.Data.TryGetValue("source", out var sourceToken)
                 ? sourceToken.ToString()
                 : "Unknown";
+            Logger.Log($"Received Deathlink: [{JsonConvert.SerializeObject(bouncedPacket.Data)}]");
             apClient.AddDeath(source);
         };
+
+        try
+        {
+            var deathCount = Session.DataStorage[Scope.Slot, "Deaths"];
+            if (deathCount is not null && deathCount != "" && deathCount != "()")
+            {
+                apClient.Deaths = deathCount.To<Dictionary<string, int>>() ?? [];
+                HeldItems["Death Coin"] = apClient.Deaths.Values.Sum();
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Log(e);
+            apClient.Deaths = [];
+        }
 
         var used = Session.DataStorage[Scope.Slot, "Used"].To<string>();
         if (used == "") return;
@@ -156,17 +149,38 @@ public class APConnection
         UsedItems["Death Coin"] = usedSplit[2];
     }
 
+    public void ReloadLocations()
+    {
+        var missing = Session.Locations.AllMissingLocations.ToArray();
+        var scoutedLocations = Session.Locations.ScoutLocationsAsync(missing).Result!;
+
+        foreach (var (id, location) in scoutedLocations.OrderBy(loc => loc.Key))
+        {
+            Locations[id - ArchipelagoClient.UUID] = location;
+        }
+
+        if (scoutedLocations.Count != 0) return;
+        StatusUpdatePacket status = new()
+        {
+            Status = ArchipelagoClientState.ClientGoal
+        };
+        Session.Socket.SendPacket(status);
+    }
+
     public void SendDeathLink(string cause)
-        => Session.Socket.SendPacketAsync(new BouncePacket
-                   {
-                       Tags = new List<string> { "DeathLink" },
-                       Data = new Dictionary<string, JToken>
-                       {
-                           { "time", DateTime.UtcNow.ToUnixTimeStamp() },
-                           { "source", Slot },
-                           { "cause", cause }
-                       }
-                   })
-                  .GetAwaiter()
-                  .GetResult();
+    {
+        Logger.Log("Sending Deathlink");
+        Session.Socket.SendPacketAsync(new BouncePacket
+                {
+                    Tags = new List<string> { "DeathLink" },
+                    Data = new Dictionary<string, JToken>
+                    {
+                        { "time", DateTime.UtcNow.ToUnixTimeStamp() },
+                        { "source", Slot },
+                        { "cause", cause }
+                    }
+                })
+               .GetAwaiter()
+               .GetResult();
+    }
 }
