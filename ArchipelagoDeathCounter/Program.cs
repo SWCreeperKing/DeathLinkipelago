@@ -67,6 +67,7 @@ public class ArchipelagoClient
     {
         if (Connection.Connected == -1) return;
 
+        Connection.Update();
         TimeSinceLastDeath += deltaTime;
 
         if (DeathCooldown < 3)
@@ -125,11 +126,6 @@ public class ArchipelagoClient
                 else
                 {
                     ImGui.TextColored(Green, "Safe to close");
-                }
-
-                if (ImGui.Button("Gain Coin"))
-                {
-                    Connection.HeldItems["Death Coin"]++;
                 }
 
                 if (Connection.Locations.Count != 0)
@@ -234,6 +230,7 @@ public class ArchipelagoClient
 
     public void RenderShopTable()
     {
+        ImGui.Text($"Shop Level: [{Connection.HeldItems["Progressive Death Shop"]}]");
         if (ImGui.BeginTable("Shop Table", 4, TableFlags | ImGuiTableFlags.SizingFixedFit))
         {
             ImGui.TableSetupColumn("Loc");

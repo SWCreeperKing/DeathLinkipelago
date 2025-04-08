@@ -1,3 +1,10 @@
+# v.0.7.2hf
+
+---
+- [Client] Fixed not receiving items correctly
+- [Client] Removed `Gain Coin` debug button
+
+
 # v.0.7.1hf
 
 ---
