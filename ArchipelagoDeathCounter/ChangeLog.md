@@ -1,3 +1,8 @@
+# v.0.9.1hf
+
+---
+- [Client] Hints tab now displays location of hint
+
 # v.0.9
 
 ---

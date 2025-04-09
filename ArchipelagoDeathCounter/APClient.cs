@@ -130,6 +130,7 @@ public class APConnection
                         => hint.FindingPlayer == PlayerSlot
                             ? Client.PlayerNames.Length + 1
                             : hint.FindingPlayer)
+                   .ThenBy(hint => hint.LocationId)
                    .ToArray());
 
         ReloadLocations();

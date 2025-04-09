@@ -98,6 +98,7 @@ public class ArchipelagoClient
     public bool SendTrapsAfterGoal;
     public Hint[] Hints = [];
     public Dictionary<long, string> ItemIdToName = [];
+    public Dictionary<long, string> LocationIdToName = [];
     public Dictionary<string, int> Deaths = [];
 
     public void Init() { Connection.LoadInitData(); }
@@ -318,12 +319,13 @@ public class ArchipelagoClient
 
     public void RenderHintsTable()
     {
-        if (ImGui.BeginTable("Hint Table", 4, TableFlags | ImGuiTableFlags.SizingFixedFit))
+        if (ImGui.BeginTable("Hint Table", 5, TableFlags | ImGuiTableFlags.SizingFixedFit))
         {
             ImGui.TableSetupColumn("Receiving Player");
             ImGui.TableSetupColumn("Item");
             ImGui.TableSetupColumn("Finding Player");
             ImGui.TableSetupColumn("Priority");
+            ImGui.TableSetupColumn("Location");
             ImGui.TableHeadersRow();
             foreach (var hint in Hints)
             {
@@ -331,6 +333,12 @@ public class ArchipelagoClient
                 {
                     itemName = ItemIdToName[hint.ItemId] =
                         Connection.Session.Items.GetItemName(hint.ItemId, PlayerGames[hint.ReceivingPlayer]);
+                }
+
+                if (!LocationIdToName.TryGetValue(hint.LocationId, out var location))
+                {
+                    location = LocationIdToName[hint.LocationId] =
+                        Connection.Session.Locations.GetLocationNameFromId(hint.LocationId, PlayerGames[hint.FindingPlayer]);
                 }
 
                 if (hint.Found) continue;
@@ -343,6 +351,8 @@ public class ArchipelagoClient
                 Connection.PrintPlayerName(hint.FindingPlayer);
                 ImGui.TableNextColumn();
                 PrintHintStatus(hint.Status);
+                ImGui.TableNextColumn();
+                ImGui.Text(location);
                 ImGui.TableNextColumn();
             }
         }
