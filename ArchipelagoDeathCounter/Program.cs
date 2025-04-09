@@ -8,6 +8,7 @@ using ArchipelagoDeathCounter.LoggerConsole.Commands;
 using Backbone;
 using ImGuiNET;
 using Raylib_cs;
+using static Archipelago.MultiClient.Net.Enums.ItemFlags;
 using static Backbone.Backbone;
 using Color = Raylib_cs.Color;
 
@@ -18,6 +19,7 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
 {
     public int Counter = 0;
     public static ArchipelagoClient Client = new();
+    public static TextClient MessageClient = new();
     public long LastUpdate = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
     public override void Init()
@@ -39,37 +41,35 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
 
     public override void Render()
     {
-        if (ImGui.BeginTabBar("tabs"))
+        if (!ImGui.BeginTabBar("tabs")) return;
+        if (ImGui.BeginTabItem("Deathlinkipelago"))
         {
+            Client.Render();
+            ImGui.EndTabItem();
+        }
 
-            if (ImGui.BeginTabItem("Deathlinkipelago"))
-            {
-                Client.Render();
-                ImGui.EndTabItem();
-            }
-
+        if (Client.Connection.Connected != -1)
+        {
             if (ImGui.BeginTabItem("Text Client"))
             {
-                ImGui.Text("Coming Soon:tm:");
-                ImGui.Text("maybe v.0.9");
-                ImGui.EndTabItem();
-            }
-            
-            if (ImGui.BeginTabItem("Hints"))
-            {
-                ImGui.Text("Coming Soon:tm:");
-                ImGui.Text("maybe v.0.9");
+                MessageClient.Render();
                 ImGui.EndTabItem();
             }
 
-            if (ImGui.BeginTabItem("Console"))
+            if (ImGui.BeginTabItem("Hints"))
             {
-                GameConsole.Render();
+                Client.RenderHintsTable();
                 ImGui.EndTabItem();
             }
-            
-            ImGui.EndTabBar();
         }
+
+        if (ImGui.BeginTabItem("Console"))
+        {
+            Logger.GameConsole.Render();
+            ImGui.EndTabItem();
+        }
+
+        ImGui.EndTabBar();
     }
 }
 
@@ -78,14 +78,17 @@ public class ArchipelagoClient
     public const long UUID = 0x0AF5F0AC;
 
     public APConnection Connection = new();
+    public Vector4 White = Color.White.ToV4();
     public Vector4 Red = Color.Red.ToV4();
     public Vector4 Green = Color.Green.ToV4();
     public Vector4 Gold = Color.Gold.ToV4();
     public Vector4 Blue = Color.Blue.ToV4();
     public Vector4 SkyBlue = Color.SkyBlue.ToV4();
+    public Vector4 Purple = Color.Purple.ToV4();
     public string[]? Error;
     public string[] PlayerNames = [];
-    public string LastPersonToBlame = "N/A";
+    public string[] PlayerGames = [];
+    public string LastPersonToBlame = "";
     public float SaveCooldown = 1.5f;
     public float DeathCooldown = 30;
     public float TimeSinceLastDeath;
@@ -93,7 +96,8 @@ public class ArchipelagoClient
     public bool HasChangedSinceSave;
     public bool HasDeathButton;
     public bool SendTrapsAfterGoal;
-
+    public Hint[] Hints = [];
+    public Dictionary<long, string> ItemIdToName = [];
     public Dictionary<string, int> Deaths = [];
 
     public void Init() { Connection.LoadInitData(); }
@@ -103,7 +107,11 @@ public class ArchipelagoClient
         if (Connection.Connected == -1) return;
 
         Connection.Update();
-        TimeSinceLastDeath += deltaTime;
+
+        if (LastPersonToBlame != "")
+        {
+            TimeSinceLastDeath += deltaTime;
+        }
 
         if (DeathCooldown < 1.5)
         {
@@ -178,7 +186,8 @@ public class ArchipelagoClient
                 ImGui.Text($"Time since last death: [{GetTime(TimeSinceLastDeath)}]");
                 ImGui.Text(
                     $"Longest Time since last death: [{GetTime(Math.Max(LongestTimeSinceLastDeath, TimeSinceLastDeath))}]");
-                ImGui.Text($"Last recorded death link was from: [{LastPersonToBlame}]");
+                ImGui.Text(
+                    $"Last recorded death link was from: [{(LastPersonToBlame == "" ? "N/A" : LastPersonToBlame)}]");
 
                 ImGui.NewLine();
                 RenderShopTable();
@@ -195,7 +204,7 @@ public class ArchipelagoClient
         ImGui.InputText("Slot", ref Connection.Slot, 255);
         if (ImGui.Button("Connect"))
         {
-            Error = Connection.TryConnect(this);
+            Error = Connection.TryConnect();
         }
 
         if (Error is null) return;
@@ -272,12 +281,15 @@ public class ArchipelagoClient
             ImGui.TableSetupColumn("For");
             ImGui.TableSetupColumn("Buy");
             ImGui.TableHeadersRow();
-            foreach (var (id, location) in Connection.Locations)
+            var hintedShopItems = Hints.Where(hint => hint.FindingPlayer == Connection.PlayerSlot)
+                                       .Select(hint => hint.LocationId - UUID)
+                                       .ToArray();
+            foreach (var (id, location) in Connection.Locations.OrderByDescending(kv => hintedShopItems.Contains(kv.Key)))
             {
                 if (id >= (Connection.HeldItems["Progressive Death Shop"] + 1) * 10) break;
                 ImGui.TableNextRow();
                 ImGui.TableSetColumnIndex(0);
-                ImGui.Text($"Item {id + 1} ");
+                ImGui.TextColored(hintedShopItems.Contains(id) ? Blue : White, $"Item {id + 1} ");
                 ImGui.TableNextColumn();
                 ImGui.TextColored(GetItemColor(location),
                     $"{location.ItemName} ".Replace(" Trap", " Sheild").Replace(" Shield", " Tarp"));
@@ -297,6 +309,40 @@ public class ArchipelagoClient
                     ImGui.TextColored(Red, "Cannot Afford");
                 }
 
+                ImGui.TableNextColumn();
+            }
+        }
+
+        ImGui.EndTable();
+    }
+
+    public void RenderHintsTable()
+    {
+        if (ImGui.BeginTable("Hint Table", 4, TableFlags | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGui.TableSetupColumn("Receiving Player");
+            ImGui.TableSetupColumn("Item");
+            ImGui.TableSetupColumn("Finding Player");
+            ImGui.TableSetupColumn("Priority");
+            ImGui.TableHeadersRow();
+            foreach (var hint in Hints)
+            {
+                if (!ItemIdToName.TryGetValue(hint.ItemId, out var itemName))
+                {
+                    itemName = ItemIdToName[hint.ItemId] =
+                        Connection.Session.Items.GetItemName(hint.ItemId, PlayerGames[hint.ReceivingPlayer]);
+                }
+
+                if (hint.Found) continue;
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                Connection.PrintPlayerName(hint.ReceivingPlayer);
+                ImGui.TableNextColumn();
+                ImGui.TextColored(GetItemColor(hint.ItemFlags), $"{itemName} ");
+                ImGui.TableNextColumn();
+                Connection.PrintPlayerName(hint.FindingPlayer);
+                ImGui.TableNextColumn();
+                PrintHintStatus(hint.Status);
                 ImGui.TableNextColumn();
             }
         }
@@ -338,12 +384,42 @@ public class ArchipelagoClient
         return sb.ToString().TrimEnd();
     }
 
+    public Vector4 GetItemColor(ItemFlags item)
+    {
+        if (item.HasFlag(Advancement)) return Gold;
+        if (item.HasFlag(Trap)) return Red;
+        return item.HasFlag(NeverExclude) ? Blue : SkyBlue;
+    }
+
     public Vector4 GetItemColor(ScoutedItemInfo item)
     {
         if (item.ItemName.Contains(" Shield")) return Red;
-        if (item.Flags.HasFlag(ItemFlags.Advancement)) return Gold;
-        if (item.Flags.HasFlag(ItemFlags.Trap) || item.Flags.HasFlag(ItemFlags.NeverExclude)) return Blue;
+        if (item.Flags.HasFlag(Advancement)) return Gold;
+        if (item.Flags.HasFlag(Trap) || item.Flags.HasFlag(NeverExclude)) return Blue;
         return SkyBlue;
+    }
+
+
+    public void PrintHintStatus(HintStatus status)
+    {
+        switch (status)
+        {
+            case HintStatus.Found:
+                ImGui.TextColored(Green, "Found");
+                break;
+            case HintStatus.Unspecified:
+                ImGui.TextColored(White, "Unspecified");
+                break;
+            case HintStatus.NoPriority:
+                ImGui.TextColored(SkyBlue, "No Priority");
+                break;
+            case HintStatus.Avoid:
+                ImGui.TextColored(Red, "Avoid");
+                break;
+            case HintStatus.Priority:
+                ImGui.TextColored(Purple, "Priority");
+                break;
+        }
     }
 
     public void OrderDeaths() => Deaths = Deaths.OrderBy(kv => kv.Value).ToDictionary(kv => kv.Key, kv => kv.Value);

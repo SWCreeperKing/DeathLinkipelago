@@ -1,8 +1,17 @@
+# v.0.9
+
+---
+- [Client] Time since last death starts counting after the first death
+- [Client] Added a text client
+- [Client] Added a hint tab
+- [Client] Added a few more commands
+- [Client] Hinted items are blue and moved to the top
+
 # v.0.8
 
 ---
 - [Client] Added shop level (how many `Progressive Death Shops` you have)
-- [Client] Added a console use the `~` key to toggle it, use the `help` command for a list of commands
+- [Client] Added a console use the `help` command for a list of commands
 - [Client] Fixed counting death from `Death Trap`s twice
 - [Client] Fixed possibly major location breaking bug?
 - [Client] Hides buy buttons when you don't have any coins 

@@ -70,7 +70,7 @@ public static class DefaultCommands
     }
 
     [Command("syncdeathswithserver"),
-     Help("Syncs the death count with the server\nThis is a way to share deaths with other deathlinkipelago clients")]
+     Help("Syncs the death count with the server\nThis is a way to share deaths with other deathlinkipelago clients\nThis is considered cheating")]
     public static LogReturn SyncServerDeaths(string[] args)
     {
         if (Client.Connection.Connected == -1) return new LogReturn("Login first");
@@ -97,5 +97,20 @@ public static class DefaultCommands
         Client.OrderDeaths();
         Client.Connection.Session.DataStorage[Scope.Global, "Deathlinkipelago_Deaths"] = JObject.FromObject(Client.Deaths);
         return new LogReturn("Deaths Synced");
+    }
+
+    [Command("setscrollbacklength"), Help("setscrollbacklenth [amount = 200]\nDefault is 200\nSets max scrollback for console and text client\nIf you want this setting to save, it must be entered before connecting")]
+    public static LogReturn SetScrollbackLength(string[] args)
+    {
+        var amount = args.Length < 1 ? 200 : int.TryParse(args[0], out var amt) ? amt : 200;
+        GameConsole.MaxScrollback = amount;
+        return new LogReturn($"Set length to [{amount}] ({(Client.Connection.Connected == -1 ? "Connect to save value" : "Value will not be saved")})");
+    }
+
+    [Command("linktree"), Help("Copies my linktree link into your clipboard!")]
+    public static LogReturn LinkTree(string[] args)
+    {
+        Raylib.SetClipboardText("https://linktr.ee/swcreeperking");
+        return new LogReturn("Copied the link into your clipboard");
     }
 }

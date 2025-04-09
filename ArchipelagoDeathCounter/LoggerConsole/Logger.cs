@@ -8,6 +8,8 @@ namespace ArchipelagoDeathCounter.LoggerConsole;
 
 public static class Logger
 {
+    public static GameConsole GameConsole = new();
+    
     public enum Level
     {
         Info,
@@ -35,7 +37,7 @@ public static class Logger
     {
         Raylib.SetTraceLogCallback(&RayLog);
 
-        LogReceived += GameConsole.LogMessage;
+        LogReceived += GameConsole.SendMessage;
         LogReceived += (_, args) =>
         {
             if (args.LogMessageLevel is not Level.Error) return;

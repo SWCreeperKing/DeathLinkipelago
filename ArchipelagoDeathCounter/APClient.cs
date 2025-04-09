@@ -4,8 +4,10 @@ using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Packets;
 using ArchipelagoDeathCounter.LoggerConsole;
-using Newtonsoft.Json;
+using ImGuiNET;
 using Newtonsoft.Json.Linq;
+using static Archipelago.MultiClient.Net.Enums.ItemFlags;
+using static UserInterface;
 
 namespace ArchipelagoDeathCounter;
 
@@ -16,6 +18,7 @@ public class APConnection
     public string Password = "";
     public string Slot = "Slot";
     public string Game = "DeathLinkipelago";
+    public int PlayerSlot;
     public int Port = 12345;
     public int Connected = -1;
     public Dictionary<string, object> SlotData = [];
@@ -49,6 +52,10 @@ public class APConnection
         var file = File.ReadAllText("init.txt").Replace("\r", "").Split('\n');
         Slot = file[0];
         Port = int.TryParse(file[1], out var port) ? port : Port;
+        if (file.Length >= 3)
+        {
+            GameConsole.MaxScrollback = int.TryParse(file[2], out var amt) ? amt : 200;
+        }
     }
 
     public void Update()
@@ -72,14 +79,10 @@ public class APConnection
 
         apClient.HasChangedSinceSave = true;
         if (Locations.Count != 0) return;
-        StatusUpdatePacket status = new()
-        {
-            Status = ArchipelagoClientState.ClientGoal
-        };
-        Session.Socket.SendPacket(status);
+        Session.SetGoalAchieved();
     }
 
-    public string[]? TryConnect(ArchipelagoClient apClient)
+    public string[]? TryConnect()
     {
         try
         {
@@ -90,11 +93,10 @@ public class APConnection
                 password: Password);
 
             if (!result.Successful) return ((LoginFailure)result).Errors;
-
             if (result is not LoginSuccessful loginSuccessful) return ["Login was not Successful (idk why)"];
 
             SlotData = loginSuccessful.SlotData;
-            OnConnection(apClient);
+            OnConnection();
         }
         catch (Exception e)
         {
@@ -104,41 +106,48 @@ public class APConnection
         return null;
     }
 
-    public void OnConnection(ArchipelagoClient apClient)
+    public void OnConnection()
     {
-        File.WriteAllLines("init.txt", [Slot, $"{Port}"]);
+        File.WriteAllLines("init.txt", [Slot, $"{Port}", $"{GameConsole.MaxScrollback}"]);
         Connected++;
 
-        apClient.PlayerNames = Session.Players.AllPlayers.Select(player => $"{player.Name}").ToArray();
-        apClient.HasDeathButton = (bool)SlotData["has_funny_button"];
-        apClient.SendTrapsAfterGoal = (bool)SlotData["send_traps_after_goal"];
+        PlayerSlot = Session.Players.ActivePlayer.Slot;
+        Client.PlayerNames = Session.Players.AllPlayers.Select(player => $"{player.Name}").ToArray();
+        Client.PlayerGames = Session.Players.AllPlayers.Select(player => player.Game).ToArray();
+        Client.HasDeathButton = (bool)SlotData["has_funny_button"];
+        Client.SendTrapsAfterGoal = (bool)SlotData["send_traps_after_goal"];
+
+        Session.DataStorage.TrackHints(hints
+            => Client.Hints =
+                hints
+                   .OrderBy(hint
+                        => hint.ReceivingPlayer == PlayerSlot
+                            ? Client.PlayerNames.Length + 1
+                            : hint.ReceivingPlayer)
+                   .ThenBy(hint => GetStatusNum(hint.Status))
+                   .ThenBy(hint => GetItemNum(hint.ItemFlags))
+                   .ThenBy(hint
+                        => hint.FindingPlayer == PlayerSlot
+                            ? Client.PlayerNames.Length + 1
+                            : hint.FindingPlayer)
+                   .ToArray());
 
         ReloadLocations();
-
-        Session.Socket.PacketReceived += packet =>
-        {
-            if (packet is not BouncedPacket bouncedPacket) return;
-            if (!bouncedPacket.Tags.Contains("DeathLink")) return;
-            var source = bouncedPacket.Data.TryGetValue("source", out var sourceToken)
-                ? sourceToken.ToString()
-                : "Unknown";
-            Logger.Log($"Received Deathlink: [{JsonConvert.SerializeObject(bouncedPacket.Data)}]");
-            apClient.AddDeath(source);
-        };
+        Session.Socket.PacketReceived += OnPacketReceived;
 
         try
         {
             var deathCount = Session.DataStorage[Scope.Slot, "Deaths"];
             if (deathCount is not null && deathCount != "" && deathCount != "()")
             {
-                apClient.Deaths = deathCount.To<Dictionary<string, int>>() ?? [];
-                HeldItems["Death Coin"] = apClient.Deaths.Values.Sum();
+                Client.Deaths = deathCount.To<Dictionary<string, int>>() ?? [];
+                HeldItems["Death Coin"] = Client.Deaths.Values.Sum();
             }
         }
         catch (Exception e)
         {
             Logger.Log(e);
-            apClient.Deaths = [];
+            Client.Deaths = [];
         }
 
         var used = Session.DataStorage[Scope.Slot, "Used"].To<string>();
@@ -160,11 +169,7 @@ public class APConnection
         }
 
         if (scoutedLocations.Count != 0) return;
-        StatusUpdatePacket status = new()
-        {
-            Status = ArchipelagoClientState.ClientGoal
-        };
-        Session.Socket.SendPacket(status);
+        Session.SetGoalAchieved();
     }
 
     public void SendDeathLink(string cause)
@@ -182,5 +187,49 @@ public class APConnection
                 })
                .GetAwaiter()
                .GetResult();
+    }
+
+    public void OnPacketReceived(ArchipelagoPacketBase packet)
+    {
+        switch (packet)
+        {
+            case ChatPrintJsonPacket message:
+                MessageClient.SendMessage(message);
+                break;
+            case BouncedPacket bouncedPacket:
+                if (!bouncedPacket.Tags.Contains("DeathLink")) return;
+                var source = bouncedPacket.Data.TryGetValue("source", out var sourceToken)
+                    ? sourceToken.ToString()
+                    : "Unknown";
+                Logger.Log($"Received Deathlink: [{JObject.FromObject(bouncedPacket.Data)}]");
+                Client.AddDeath(source);
+                break;
+            case PrintJsonPacket updatePacket:
+                var data = updatePacket.Data.Select(part => part.Text).First()!;
+                if (!data.StartsWith("A hint costs ")) break;
+                MessageClient.SendMessage(new ChatPrintJsonPacket { Message = data, Slot = 0 });
+                break;
+        }
+    }
+
+    public void PrintPlayerName(int slot)
+        => ImGui.TextColored(
+            slot == PlayerSlot ? Client.Purple : slot == 0 ? Client.Gold : Client.White, Client.PlayerNames[slot]);
+
+    public int GetStatusNum(HintStatus status)
+        => status switch
+        {
+            HintStatus.Found => 0,
+            HintStatus.Unspecified => 3,
+            HintStatus.NoPriority => 2,
+            HintStatus.Avoid => 4,
+            HintStatus.Priority => 1,
+        };
+
+    public int GetItemNum(ItemFlags item)
+    {
+        if (item.HasFlag(Advancement)) return 0;
+        if (item.HasFlag(Trap)) return 10;
+        return item.HasFlag(NeverExclude) ? 1 : 2;
     }
 }
