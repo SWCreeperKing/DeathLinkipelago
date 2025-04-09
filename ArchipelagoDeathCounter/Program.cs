@@ -20,6 +20,7 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
     public int Counter = 0;
     public static ArchipelagoClient Client = new();
     public static TextClient MessageClient = new();
+    public static SenderLog ItemLog = new();
     public long LastUpdate = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
     public override void Init()
@@ -61,6 +62,12 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
                 Client.RenderHintsTable();
                 ImGui.EndTabItem();
             }
+
+            if (ImGui.BeginTabItem("Item Log"))
+            {
+                ItemLog.Render();
+                ImGui.EndTabItem();
+            }
         }
 
         if (ImGui.BeginTabItem("Console"))
@@ -79,12 +86,14 @@ public class ArchipelagoClient
 
     public APConnection Connection = new();
     public Vector4 White = Color.White.ToV4();
+    public Vector4 DirtyWhite = new(0.95f, 0.95f, 0.81f, 1f);
     public Vector4 Red = Color.Red.ToV4();
     public Vector4 Green = Color.Green.ToV4();
     public Vector4 Gold = Color.Gold.ToV4();
     public Vector4 Blue = Color.Blue.ToV4();
     public Vector4 SkyBlue = Color.SkyBlue.ToV4();
     public Vector4 Purple = Color.Purple.ToV4();
+    public Vector4 DarkPurple = new(0.89f, 0.01f, 0.89f, 1f);
     public string[]? Error;
     public string[] PlayerNames = [];
     public string[] PlayerGames = [];
@@ -285,9 +294,15 @@ public class ArchipelagoClient
             var hintedShopItems = Hints.Where(hint => hint.FindingPlayer == Connection.PlayerSlot)
                                        .Select(hint => hint.LocationId - UUID)
                                        .ToArray();
-            foreach (var (id, location) in Connection.Locations.OrderByDescending(kv => hintedShopItems.Contains(kv.Key)))
+            foreach (var (id, location) in Connection.Locations.OrderByDescending(
+                         kv => hintedShopItems.Contains(kv.Key)))
             {
-                if (id >= (Connection.HeldItems["Progressive Death Shop"] + 1) * 10) break;
+                if (id >= (Connection.HeldItems["Progressive Death Shop"] + 1) * 10)
+                {
+                    if (hintedShopItems.Contains(id)) continue;
+                    break;
+                }
+
                 ImGui.TableNextRow();
                 ImGui.TableSetColumnIndex(0);
                 ImGui.TextColored(hintedShopItems.Contains(id) ? Blue : White, $"Item {id + 1} ");
@@ -295,7 +310,7 @@ public class ArchipelagoClient
                 ImGui.TextColored(GetItemColor(location),
                     $"{location.ItemName} ".Replace(" Trap", " Sheild").Replace(" Shield", " Tarp"));
                 ImGui.TableNextColumn();
-                ImGui.Text($"{location.Player.Name} ");
+                Connection.PrintPlayerName(location.Player.Slot);
                 ImGui.TableNextColumn();
 
                 if (canAfford)
@@ -329,18 +344,8 @@ public class ArchipelagoClient
             ImGui.TableHeadersRow();
             foreach (var hint in Hints)
             {
-                if (!ItemIdToName.TryGetValue(hint.ItemId, out var itemName))
-                {
-                    itemName = ItemIdToName[hint.ItemId] =
-                        Connection.Session.Items.GetItemName(hint.ItemId, PlayerGames[hint.ReceivingPlayer]);
-                }
-
-                if (!LocationIdToName.TryGetValue(hint.LocationId, out var location))
-                {
-                    location = LocationIdToName[hint.LocationId] =
-                        Connection.Session.Locations.GetLocationNameFromId(hint.LocationId, PlayerGames[hint.FindingPlayer]);
-                }
-
+                var itemName = ItemIdToItemName(hint.ItemId, hint.ReceivingPlayer);
+                var location = LocationIdToLocationName(hint.LocationId, hint.FindingPlayer);
                 if (hint.Found) continue;
                 ImGui.TableNextRow();
                 ImGui.TableSetColumnIndex(0);
@@ -352,7 +357,7 @@ public class ArchipelagoClient
                 ImGui.TableNextColumn();
                 PrintHintStatus(hint.Status);
                 ImGui.TableNextColumn();
-                ImGui.Text(location);
+                ImGui.TextColored(Green, location);
                 ImGui.TableNextColumn();
             }
         }
@@ -433,4 +438,26 @@ public class ArchipelagoClient
     }
 
     public void OrderDeaths() => Deaths = Deaths.OrderBy(kv => kv.Value).ToDictionary(kv => kv.Key, kv => kv.Value);
+
+    public string ItemIdToItemName(long id, int playerSlot)
+    {
+        if (!ItemIdToName.TryGetValue(id, out var itemName))
+        {
+            itemName = ItemIdToName[id] =
+                Connection.Session.Items.GetItemName(id, PlayerGames[playerSlot]);
+        }
+
+        return itemName;
+    }
+
+    public string LocationIdToLocationName(long id, int playerSlot)
+    {
+        if (!LocationIdToName.TryGetValue(id, out var location))
+        {
+            location = LocationIdToName[id] =
+                Connection.Session.Locations.GetLocationNameFromId(id, PlayerGames[playerSlot]);
+        }
+
+        return location;
+    }
 }

@@ -5,6 +5,7 @@ using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Packets;
 using ArchipelagoDeathCounter.LoggerConsole;
 using ImGuiNET;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static Archipelago.MultiClient.Net.Enums.ItemFlags;
 using static UserInterface;
@@ -195,27 +196,40 @@ public class APConnection
         switch (packet)
         {
             case ChatPrintJsonPacket message:
-                MessageClient.SendMessage(message);
+                MessageClient.SendMessage(new ChatMessagePacket(message));
                 break;
             case BouncedPacket bouncedPacket:
                 if (!bouncedPacket.Tags.Contains("DeathLink")) return;
                 var source = bouncedPacket.Data.TryGetValue("source", out var sourceToken)
                     ? sourceToken.ToString()
                     : "Unknown";
-                Logger.Log($"Received Deathlink: [{JObject.FromObject(bouncedPacket.Data)}]");
+                Logger.Log($"Received Deathlink: [{JsonConvert.SerializeObject(bouncedPacket.Data)}]");
                 Client.AddDeath(source);
                 break;
             case PrintJsonPacket updatePacket:
-                var data = updatePacket.Data.Select(part => part.Text).First()!;
-                if (!data.StartsWith("A hint costs ")) break;
-                MessageClient.SendMessage(new ChatPrintJsonPacket { Message = data, Slot = 0 });
+                if (updatePacket.Data.Length == 1)
+                {
+                    MessageClient.SendMessage(new ServerMessagePacket(updatePacket.Data.First().Text!));
+                }
+
+                if (updatePacket.Data.Length < 2) break;
+                if (updatePacket.Data.First().Text!.StartsWith("[Hint]: "))
+                {
+                    if (updatePacket.Data.Last().HintStatus!.Value == HintStatus.Found) break;
+                    MessageClient.SendMessage(new HintMessagePacket(updatePacket.Data));
+                }
+                else if (updatePacket.Data[1].Text is " found their " or " sent ")
+                {
+                    ItemLog.SendMessage(updatePacket.Data);
+                }
+
                 break;
         }
     }
 
     public void PrintPlayerName(int slot)
         => ImGui.TextColored(
-            slot == PlayerSlot ? Client.Purple : slot == 0 ? Client.Gold : Client.White, Client.PlayerNames[slot]);
+            slot == PlayerSlot ? Client.DarkPurple : slot == 0 ? Client.Gold : Client.DirtyWhite, Client.PlayerNames[slot]);
 
     public int GetStatusNum(HintStatus status)
         => status switch

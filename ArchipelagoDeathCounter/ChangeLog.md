@@ -1,3 +1,11 @@
+#  v.0.10
+
+---
+- [Client] Fixed bug with hinted items and items not appearing in shop
+- [Client] Added hints to the text client tab (PAIN AAAAAAAA)
+- [Client] Added an item log that details who sent who what 
+- [Client] Various small UI changes
+
 # v.0.9.1hf
 
 ---

@@ -8,6 +8,7 @@ public abstract class Messenger<TMessageType>
     public static int MaxScrollback = 200;
     
     public bool ScrollToBottom = true;
+    public bool ShowInput = true;
     private Queue<TMessageType> Scrollback = [];
     private string Input = "";
     private bool ToScroll;
@@ -35,6 +36,7 @@ public abstract class Messenger<TMessageType>
 
         ImGui.EndChild();
 
+        if (!ShowInput) return;
         if (!ImGui.InputText("Command", ref Input, 999, EnterReturnsTrue)) return;
         OnSentMessage(Input);
         UpdateScrollBack();
