@@ -1,3 +1,14 @@
+# v.0.11
+
+---
+- [Client] Added copy button to hints
+- [Client] Added entrance to hint tab 
+- [Client] Added player list tab
+- [Client] Added a credits button
+- [Client] Removed the text input in the item log
+- [Client] Added icon made by Raphael2512
+- [Client] Fixed crash with the hint tab
+
 #  v.0.10
 
 ---

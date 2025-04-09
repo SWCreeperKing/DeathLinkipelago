@@ -1,6 +1,5 @@
 using Archipelago.MultiClient.Net.Models;
 using ImGuiNET;
-using Newtonsoft.Json;
 using static UserInterface;
 
 namespace ArchipelagoDeathCounter;

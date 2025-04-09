@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text;
 using Archipelago.MultiClient.Net.Enums;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Raylib_cs;
 using RayWork.Commands;
@@ -105,12 +104,5 @@ public static class DefaultCommands
         var amount = args.Length < 1 ? 200 : int.TryParse(args[0], out var amt) ? amt : 200;
         GameConsole.MaxScrollback = amount;
         return new LogReturn($"Set length to [{amount}] ({(Client.Connection.Connected == -1 ? "Connect to save value" : "Value will not be saved")})");
-    }
-
-    [Command("linktree"), Help("Copies my linktree link into your clipboard!")]
-    public static LogReturn LinkTree(string[] args)
-    {
-        Raylib.SetClipboardText("https://linktr.ee/swcreeperking");
-        return new LogReturn("Copied the link into your clipboard");
     }
 }

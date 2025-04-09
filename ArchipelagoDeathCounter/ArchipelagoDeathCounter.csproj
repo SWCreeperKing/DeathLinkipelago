@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <ApplicationIcon>Icon.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,6 +22,10 @@
       <Reference Include="Newtonsoft.Json">
         <HintPath>..\..\Archipelago.MultiClient.Net\DLLs\net45\Newtonsoft.Json.dll</HintPath>
       </Reference>
+    </ItemGroup>
+    
+    <ItemGroup Label="Resources">
+        <EmbeddedResource Include="Resources/**/*.*" />
     </ItemGroup>
 
 </Project>

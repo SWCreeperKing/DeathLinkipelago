@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
+using System.Numerics;
+using System.Reflection;
 using System.Text;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
@@ -20,11 +22,29 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
     public int Counter = 0;
     public static ArchipelagoClient Client = new();
     public static TextClient MessageClient = new();
-    public static SenderLog ItemLog = new();
+    public static SenderLog ItemLog = new() { ShowInput = false };
     public long LastUpdate = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
     public override void Init()
     {
+        try
+        {
+            var asm = Assembly.GetExecutingAssembly();
+            var stream =
+                asm.GetManifestResourceStream("ArchipelagoDeathCounter.Resources.Icon.png");
+
+            var byteArr = new byte[stream!.Length];
+            stream.ReadExactly(byteArr, 0, (int)stream.Length);
+            stream.Close();
+
+
+            Raylib.SetWindowIcon(Raylib.LoadImageFromMemory(".png", byteArr));
+        }
+        catch (Exception e)
+        {
+            //ignored
+        }
+        
         Logger.Initialize();
         Logger.Log("init");
         CommandRegister.RegisterCommandFile(typeof(DefaultCommands));
@@ -68,11 +88,40 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
                 ItemLog.Render();
                 ImGui.EndTabItem();
             }
+
+            if (ImGui.BeginTabItem("Player List"))
+            {
+                Client.RenderPlayerTable();
+                ImGui.EndTabItem();
+            }
         }
 
         if (ImGui.BeginTabItem("Console"))
         {
             Logger.GameConsole.Render();
+            ImGui.EndTabItem();
+        }
+
+        if (ImGui.BeginTabItem("Credits"))
+        {
+            ImGui.Text("SW_CreeperKing");
+            ImGui.Text("- Developer");
+            if (ImGui.Button("Open Link Tree"))
+            {
+                Process.Start("explorer", "https://linktr.ee/swcreeperking");
+            }
+
+            ImGui.NewLine();
+            ImGui.Text("Raphael2512");
+            ImGui.Text("- Application Icon");
+            ImGui.PushID("linktree2");
+            if (ImGui.Button("Open Link Tree"))
+            {
+                Process.Start("explorer", "https://linktr.ee/raphael2512");
+            }
+
+            ImGui.PopID();
+
             ImGui.EndTabItem();
         }
 
@@ -262,6 +311,7 @@ public class ArchipelagoClient
             ImGui.TableHeadersRow();
             foreach (var (blame, amount) in Deaths)
             {
+                if (amount == 0) continue;
                 ImGui.TableNextRow();
                 ImGui.TableSetColumnIndex(0);
                 ImGui.Text(blame);
@@ -334,30 +384,84 @@ public class ArchipelagoClient
 
     public void RenderHintsTable()
     {
-        if (ImGui.BeginTable("Hint Table", 5, TableFlags | ImGuiTableFlags.SizingFixedFit))
+        if (ImGui.BeginTable("Hint Table", 7, TableFlags | ImGuiTableFlags.SizingFixedFit))
         {
+            ImGui.TableSetupColumn("Copy");
             ImGui.TableSetupColumn("Receiving Player");
             ImGui.TableSetupColumn("Item");
             ImGui.TableSetupColumn("Finding Player");
             ImGui.TableSetupColumn("Priority");
             ImGui.TableSetupColumn("Location");
+            ImGui.TableSetupColumn("Entrance");
             ImGui.TableHeadersRow();
-            foreach (var hint in Hints)
+            var i = 0;
+            try
             {
-                var itemName = ItemIdToItemName(hint.ItemId, hint.ReceivingPlayer);
-                var location = LocationIdToLocationName(hint.LocationId, hint.FindingPlayer);
-                if (hint.Found) continue;
+                foreach (var hint in Hints)
+                {
+                    if (hint.Found) continue;
+                    var itemName = ItemIdToItemName(hint.ItemId, hint.ReceivingPlayer);
+                    var location = LocationIdToLocationName(hint.LocationId, hint.FindingPlayer);
+
+                    ImGui.TableNextRow();
+                    ImGui.TableSetColumnIndex(0);
+                    ImGui.PushID($"copy: {i++}");
+                    if (ImGui.Button("Copy"))
+                    {
+                        Raylib.SetClipboardText(
+                            $"`{PlayerNames[hint.ReceivingPlayer]}`'s __{itemName}__ is in `{PlayerNames[hint.FindingPlayer]}`'s world at **{location}**");
+                    }
+
+                    ImGui.PopID();
+                    ImGui.TableNextColumn();
+                    Connection.PrintPlayerName(hint.ReceivingPlayer);
+                    ImGui.TableNextColumn();
+                    ImGui.TextColored(GetItemColor(hint.ItemFlags), $"{itemName} ");
+                    ImGui.TableNextColumn();
+                    Connection.PrintPlayerName(hint.FindingPlayer);
+                    ImGui.TableNextColumn();
+                    PrintHintStatus(hint.Status);
+                    ImGui.TableNextColumn();
+                    ImGui.TextColored(Green, location);
+                    ImGui.TableNextColumn();
+                    if (hint.Entrance.Trim() == "")
+                    {
+                        ImGui.TextColored(White, "Vanilla");
+                    }
+                    else
+                    {
+                        ImGui.TextColored(SkyBlue, hint.Entrance);
+                    }
+
+                    ImGui.TableNextColumn();
+                }
+            }
+            catch (Exception e)
+            {
+                //ignored
+            }
+        }
+
+        ImGui.EndTable();
+    }
+
+    public void RenderPlayerTable()
+    {
+        if (ImGui.BeginTable("Hint Table", 3, TableFlags | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGui.TableSetupColumn("Slot");
+            ImGui.TableSetupColumn("Player");
+            ImGui.TableSetupColumn("Game");
+            ImGui.TableHeadersRow();
+            for (var i = 0; i < PlayerNames.Length; i++)
+            {
                 ImGui.TableNextRow();
                 ImGui.TableSetColumnIndex(0);
-                Connection.PrintPlayerName(hint.ReceivingPlayer);
+                ImGui.Text($"{i}");
                 ImGui.TableNextColumn();
-                ImGui.TextColored(GetItemColor(hint.ItemFlags), $"{itemName} ");
+                Connection.PrintPlayerName(i);
                 ImGui.TableNextColumn();
-                Connection.PrintPlayerName(hint.FindingPlayer);
-                ImGui.TableNextColumn();
-                PrintHintStatus(hint.Status);
-                ImGui.TableNextColumn();
-                ImGui.TextColored(Green, location);
+                ImGui.TextColored(SkyBlue, PlayerGames[i]);
                 ImGui.TableNextColumn();
             }
         }

@@ -1,10 +1,6 @@
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
-using ArchipelagoDeathCounter.LoggerConsole;
-using Backbone;
 using ImGuiNET;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using static UserInterface;
 
 namespace ArchipelagoDeathCounter;
