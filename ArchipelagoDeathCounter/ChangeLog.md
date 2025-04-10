@@ -1,3 +1,12 @@
+# v.0.11.2hf
+
+---
+- [APWorld] Removed a missed print line from testing XD (oopps) (no other change (meaning the client doesn't need it))
+- [Client] Removed a log line that made the console less readable
+- [Client] Moved most AP Backend to a separate project (to make this one smaller)
+- [Client] Made the client more resilient to a few specific crashes 
+- [Client] Fixed a Small Object Heap leak
+
 # v.0.11.1hf
 
 ---

@@ -17,7 +17,13 @@
 
     <ItemGroup>
       <Reference Include="Backbone">
-        <HintPath>..\..\AdventOfCode\Backbone\bin\Debug\net9.0\Backbone.dll</HintPath>
+        <HintPath>..\..\CreepyUtil\CreepyUtil.Archipelago.UIBackbone\bin\Debug\net9.0\Backbone.dll</HintPath>
+      </Reference>
+      <Reference Include="CreepyUtil.Archipelago">
+        <HintPath>..\..\CreepyUtil\CreepyUtil.Archipelago.UIBackbone\bin\Debug\net9.0\CreepyUtil.Archipelago.dll</HintPath>
+      </Reference>
+      <Reference Include="CreepyUtil.Archipelago.UIBackbone">
+        <HintPath>..\..\CreepyUtil\CreepyUtil.Archipelago.UIBackbone\bin\Debug\net9.0\CreepyUtil.Archipelago.UIBackbone.dll</HintPath>
       </Reference>
       <Reference Include="Newtonsoft.Json">
         <HintPath>..\..\Archipelago.MultiClient.Net\DLLs\net45\Newtonsoft.Json.dll</HintPath>
