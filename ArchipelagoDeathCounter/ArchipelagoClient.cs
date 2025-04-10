@@ -1,15 +1,19 @@
-using Archipelago.MultiClient.Net.Models;
+using Archipelago.MultiClient.Net.Enums;
 using CreepyUtil.Archipelago;
 using CreepyUtil.Archipelago.UIBackbone;
 using ImGuiNET;
 using Newtonsoft.Json.Linq;
 using Raylib_cs;
 
+namespace ArchipelagoDeathCounter;
+
 public class ArchipelagoClient(LoginInfo info, long gameUUID) : ApUIClient(info, gameUUID)
 {
+    public readonly Dictionary<ArchipelagoClientState, string> PlayerStatusEnumName =
+        Enum.GetValues<ArchipelagoClientState>()
+            .ToDictionary(state => state, state => Enum.GetName(state)!.Replace("Client", ""));
+
     public string[]? Error;
-    public string[] PlayerNames = [];
-    public string[] PlayerGames = [];
     public string LastPersonToBlame = "";
     public float SaveCooldown = 1.5f;
     public float DeathCooldown = 30;
@@ -18,9 +22,6 @@ public class ArchipelagoClient(LoginInfo info, long gameUUID) : ApUIClient(info,
     public bool HasChangedSinceSave;
     public bool HasDeathButton;
     public bool SendTrapsAfterGoal;
-    public Hint[] Hints = [];
-    public Dictionary<long, string> ItemIdToName = [];
-    public Dictionary<long, string> LocationIdToName = [];
     public Dictionary<string, int> Deaths = [];
 
     public Dictionary<string, int> UsedItems = new()
@@ -45,7 +46,7 @@ public class ArchipelagoClient(LoginInfo info, long gameUUID) : ApUIClient(info,
         if (!IsConnected) return;
 
         PushUpdatedVariables();
-        
+
         foreach (var item in GetOutstandingItems())
         {
             HeldItems[item!.ItemName]++;
@@ -290,7 +291,7 @@ public class ArchipelagoClient(LoginInfo info, long gameUUID) : ApUIClient(info,
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 //ignored
             }
@@ -301,22 +302,24 @@ public class ArchipelagoClient(LoginInfo info, long gameUUID) : ApUIClient(info,
 
     public void RenderPlayerTable()
     {
-        if (ImGui.BeginTable("Hint Table", 3, Backbone.Backbone.TableFlags | ImGuiTableFlags.SizingFixedFit))
+        if (ImGui.BeginTable("Player List", 4, Backbone.Backbone.TableFlags | ImGuiTableFlags.SizingFixedFit))
         {
             ImGui.TableSetupColumn("Slot");
             ImGui.TableSetupColumn("Player");
             ImGui.TableSetupColumn("Game");
+            ImGui.TableSetupColumn("Status");
             ImGui.TableHeadersRow();
-            for (var i = 0; i < PlayerNames.Length; i++)
+            foreach (var player in Session.Players.AllPlayers)
             {
                 ImGui.TableNextRow();
                 ImGui.TableSetColumnIndex(0);
-                ImGui.Text($"{i}");
+                ImGui.Text($"{player.Slot}");
                 ImGui.TableNextColumn();
-                PrintPlayerName(i);
+                PrintPlayerName(player.Slot);
                 ImGui.TableNextColumn();
-                ImGui.TextColored(SkyBlue, PlayerGames[i]);
+                ImGui.TextColored(SkyBlue, player.Game);
                 ImGui.TableNextColumn();
+                ImGui.Text(PlayerStatusEnumName[PlayerStates[player.Slot]]);
             }
         }
 
@@ -326,7 +329,7 @@ public class ArchipelagoClient(LoginInfo info, long gameUUID) : ApUIClient(info,
     public void BuyCheck(long id, ArchipelagoClient apClient)
     {
         if (GetItemAmount("Death Coin") < 1) return;
-        
+
         SendLocation(id);
         UsedItems["Death Coin"]++;
 

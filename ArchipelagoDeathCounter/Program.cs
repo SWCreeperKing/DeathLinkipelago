@@ -9,6 +9,7 @@ using ImGuiNET;
 using Raylib_cs;
 using static CreepyUtil.Archipelago.UIBackbone.ApUIClient;
 
+Logger.Initialize();
 UserInterface ui = new();
 ui.Loop();
 
@@ -53,7 +54,6 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
             //ignored
         }
 
-        Logger.Initialize();
         Logger.Log("init");
         CommandRegister.RegisterCommandFile(typeof(ProgramCommands));
         Raylib.SetTargetFPS(30);
@@ -91,6 +91,7 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
                         var client = (ArchipelagoClient)rawClient;
                         File.WriteAllLines("init.txt", [Slot, $"{Port}", $"{GameConsole.MaxScrollback}"]);
                         client.HasDeathButton = (bool)client.SlotData["has_funny_button"];
+                        client.OnDeathLinkReceived += (_, blame) => client.AddDeath(blame);
 
                         try
                         {
@@ -117,7 +118,7 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
                             client.Deaths = [];
                         }
 
-                        var used = client["Used"]!.To<string>();
+                        var used = client["Used"]!.To<string>() ?? "";
                         if (used == "") return;
                         var usedSplit = used.Split('|').Select(int.Parse).ToArray();
                         client.UsedItems["Death Trap"] = usedSplit[0];

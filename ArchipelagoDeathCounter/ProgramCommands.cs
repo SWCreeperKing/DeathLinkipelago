@@ -9,16 +9,15 @@ namespace ArchipelagoDeathCounter;
 
 public static class ProgramCommands
 {
-    
     [Command("death"),
      Help(
          "death [slot] [amount = 1]\nAdds [amount] to [slot] in the death table\nDoes add death coins\nDoes NOT send a death link")]
     public static LogReturn AddDeaths(string[] args)
     {
-        if (Client is null || Client.IsConnected) return new LogReturn("Login first");
+        if (IsNotConnected()) return new LogReturn("Login first");
         if (args.Length < 1) return new LogReturn("Not Enough Arguments", SoftError);
-        var slot = args[0];
-        var amount = args.Length < 2 ? 1 : int.TryParse(args[1], out var amt) ? amt : 1;
+        var slot = string.Join(" ", args[..^1]);
+        var amount = args.Length < 2 ? 1 : int.TryParse(args[^1], out var amt) ? amt : 1;
         Client.AddDeath(slot, amount);
         return new LogReturn($"Added [{amount}] to [{slot}]");
     }
@@ -26,16 +25,17 @@ public static class ProgramCommands
     [Command("refreshlocations"), Help("Refreshes the locations, shouldn't need to do this")]
     public static LogReturn ReloadLocations(string[] args)
     {
-        if (Client is null ||Client.IsConnected) return new LogReturn("Login first");
+        if (IsNotConnected()) return new LogReturn("Login first");
         Client.ReloadLocations();
         return new LogReturn("Reloaded Locations");
     }
 
     [Command("syncdeathswithserver"),
-     Help("Syncs the death count with the server\nThis is a way to share deaths with other deathlinkipelago clients\nThis is considered cheating")]
+     Help(
+         "Syncs the death count with the server\nThis is a way to share deaths with other deathlinkipelago clients\nThis is considered cheating")]
     public static LogReturn SyncServerDeaths(string[] args)
     {
-        if (Client is null ||Client.IsConnected) return new LogReturn("Login first");
+        if (IsNotConnected()) return new LogReturn("Login first");
 
         try
         {
@@ -61,11 +61,16 @@ public static class ProgramCommands
         return new LogReturn("Deaths Synced");
     }
 
-    [Command("setscrollbacklength"), Help("setscrollbacklenth [amount = 200]\nDefault is 200\nSets max scrollback for console and text client\nIf you want this setting to save, it must be entered before connecting")]
+    [Command("setscrollbacklength"),
+     Help(
+         "setscrollbacklenth [amount = 200]\nDefault is 200\nSets max scrollback for console and text client\nIf you want this setting to save, it must be entered before connecting")]
     public static LogReturn SetScrollbackLength(string[] args)
     {
         var amount = args.Length < 1 ? 200 : int.TryParse(args[0], out var amt) ? amt : 200;
         GameConsole.MaxScrollback = amount;
-        return new LogReturn($"Set length to [{amount}] ({(Client.IsConnected ? "Connect to save value" : "Value will not be saved")})");
+        return new LogReturn(
+            $"Set length to [{amount}] ({(IsNotConnected() ? "Connect to save value" : "Value will not be saved")})");
     }
+
+    public static bool IsNotConnected() => Client is null || !Client.IsConnected;
 }

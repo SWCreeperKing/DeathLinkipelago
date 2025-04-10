@@ -1,3 +1,13 @@
+# v.0.11.3hf
+
+---
+- [Client] Fixed a bug preventing login
+- [Client] Fixed not receiving a death link
+- [Client] Fixed hints not showing
+- [Client] Added Status to Player List
+- [Client] Fixed Player List not displaying
+- [Client] Fixed commands being strange
+
 # v.0.11.2hf
 
 ---
