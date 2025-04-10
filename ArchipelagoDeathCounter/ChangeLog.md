@@ -1,10 +1,17 @@
+# v.0.11.1hf
+
+---
+- [Client] Fixed hints with locations causing a crash
+- [Client] Added a horizontal scrollbars to a few tabs
+- [Client] Very slightly increased performance when rendering hints and item logs
+
 # v.0.11
 
 ---
 - [Client] Added copy button to hints
 - [Client] Added entrance to hint tab 
 - [Client] Added player list tab
-- [Client] Added a credits button
+- [Client] Added a credits tab
 - [Client] Removed the text input in the item log
 - [Client] Added icon made by Raphael2512
 - [Client] Fixed crash with the hint tab

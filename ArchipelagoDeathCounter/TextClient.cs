@@ -1,6 +1,9 @@
+using System.Numerics;
+using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using ImGuiNET;
+using static ArchipelagoClient;
 using static UserInterface;
 
 namespace ArchipelagoDeathCounter;
@@ -34,7 +37,7 @@ public class ServerMessagePacket(string message) : MessagePacket
 
     public override void RenderMessage()
     {
-        ImGui.TextColored(Client.Gold, "Server");
+        ImGui.TextColored(Gold, "Server");
         ImGui.SameLine(0, 0);
         ImGui.Text(Message);
     }
@@ -42,33 +45,61 @@ public class ServerMessagePacket(string message) : MessagePacket
 
 public class HintMessagePacket(JsonMessagePart[] messageParts) : MessagePacket
 {
-    public readonly JsonMessagePart[] MessageParts = messageParts;
+    public readonly MessagePart[] MessageParts = messageParts.Select(mp => new MessagePart(mp)).ToArray();
 
     public override void RenderMessage()
     {
-        var i = 0;
-        ImGui.TextColored(Client.Red, MessageParts[i++].Text);
+        for (var i = 0; i < MessageParts.Length; i++)
+        {
+            MessageParts[i].Render(i < MessageParts.Length - 1);
+        }
+    }
+}
+
+public readonly struct MessagePart
+{
+    public readonly Vector4 Color = White;
+    public readonly string Text = "";
+
+    public MessagePart(JsonMessagePart jsonMessagePart, Vector4? colorOverride = null)
+    {
+        switch (jsonMessagePart.Type)
+        {
+            case JsonMessagePartType.PlayerId:
+                var slot = int.Parse(jsonMessagePart.Text);
+                Color = slot == Client.Connection.PlayerSlot ? DarkPurple : slot == 0 ? Gold : DirtyWhite;
+                Text = Client.PlayerNames[slot];
+                break;
+            case JsonMessagePartType.ItemId:
+                Color = Client.GetItemColor(jsonMessagePart.Flags!.Value);
+                Text = Client.ItemIdToItemName(long.Parse(jsonMessagePart.Text), jsonMessagePart.Player!.Value);
+                break;
+            case JsonMessagePartType.LocationId:
+                Color = Green;
+                Text = Client.LocationIdToLocationName(long.Parse(jsonMessagePart.Text), jsonMessagePart.Player!.Value);
+                break;
+            case JsonMessagePartType.EntranceName:
+                var entranceName = jsonMessagePart.Text.Trim();
+                Color = entranceName == "" ? White : ChillBlue;
+                Text = entranceName == "" ? "Vanilla" : entranceName;
+                break;
+            case JsonMessagePartType.HintStatus:
+                Color = Client.HintStatusColor[(HintStatus)jsonMessagePart.HintStatus!];
+                Text = Client.HintStatusText[(HintStatus)jsonMessagePart.HintStatus!];
+                break;
+            default:
+                Text = jsonMessagePart.Text ?? "";
+                break;
+        }
+
+        if (colorOverride is null) return;
+        Color = colorOverride.Value;
+    }
+
+    public void Render(bool appendSameLine = true)
+    {
+        ImGui.TextColored(Color, Text);
+        if (!appendSameLine) return;
         ImGui.SameLine(0, 0);
-        Client.Connection.PrintPlayerName(int.Parse(MessageParts[i++].Text));
-        ImGui.SameLine(0, 0);
-        ImGui.Text(MessageParts[i++].Text);
-        ImGui.SameLine(0, 0);
-        var itemName = Client.ItemIdToItemName(long.Parse(MessageParts[i].Text), MessageParts[i].Player!.Value);
-        ImGui.TextColored(Client.GetItemColor(MessageParts[i++].Flags!.Value), itemName);
-        ImGui.SameLine(0, 0);
-        ImGui.Text(MessageParts[i++].Text);
-        ImGui.SameLine(0, 0);
-        ImGui.TextColored(Client.Green,
-            Client.LocationIdToLocationName(long.Parse(MessageParts[i].Text), MessageParts[i++].Player!.Value));
-        ImGui.SameLine(0, 0);
-        ImGui.Text(MessageParts[i++].Text);
-        ImGui.SameLine(0, 0);
-        Client.Connection.PrintPlayerName(int.Parse(MessageParts[i++].Text));
-        ImGui.SameLine(0, 0);
-        ImGui.Text(MessageParts[i++].Text);
-        ImGui.SameLine(0, 0);
-        ImGui.Text(MessageParts[i++].Text);
-        ImGui.SameLine(0, 0);
-        Client.PrintHintStatus(MessageParts[i].HintStatus!.Value);
     }
 }

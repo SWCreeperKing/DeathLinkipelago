@@ -16,7 +16,7 @@ public abstract class Messenger<TMessageType>
     public void Render()
     {
         var wSize = ImGui.GetContentRegionAvail();
-        ImGui.BeginChild("messenger", wSize with { Y = wSize.Y - 50 }, ImGuiChildFlags.Borders);
+        ImGui.BeginChild("messenger", wSize with { Y = wSize.Y - 50 }, ImGuiChildFlags.Borders, ImGuiWindowFlags.HorizontalScrollbar);
         {
             foreach (var message in Scrollback)
             {

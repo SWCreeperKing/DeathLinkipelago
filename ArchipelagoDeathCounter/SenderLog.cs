@@ -1,45 +1,19 @@
 using Archipelago.MultiClient.Net.Models;
 using ImGuiNET;
+using static ArchipelagoClient;
 using static UserInterface;
 
 namespace ArchipelagoDeathCounter;
 
-public class SenderLog : Messenger<JsonMessagePart[]>
+public class SenderLog : Messenger<MessagePart[]>
 {
     protected override void OnSentMessage(string message) { }
 
-    protected override void RenderMessage(JsonMessagePart[] message)
+    protected override void RenderMessage(MessagePart[] message)
     {
-        var i = 0;
-        if (message.Length == 8)
+        for (var i = 0; i < message.Length; i++)
         {
-            Client.Connection.PrintPlayerName(int.Parse(message[i++].Text));
-            ImGui.SameLine(0, 0);
-            ImGui.Text(message[i++].Text);
-            ImGui.SameLine(0, 0);
-            var itemName = Client.ItemIdToItemName(long.Parse(message[i].Text), message[i].Player!.Value);
-            ImGui.TextColored(Client.GetItemColor(message[i++].Flags!.Value), itemName);
-            ImGui.SameLine(0, 0);
-            ImGui.Text(message[i++].Text);
-            ImGui.SameLine(0, 0);
-            Client.Connection.PrintPlayerName(int.Parse(message[i++].Text));
+            message[i].Render(i < message.Length - 1);
         }
-        else
-        {
-            Client.Connection.PrintPlayerName(int.Parse(message[i++].Text));
-            ImGui.SameLine(0, 0);
-            ImGui.Text(message[i++].Text);
-            ImGui.SameLine(0, 0);
-            var itemName = Client.ItemIdToItemName(long.Parse(message[i].Text), message[i].Player!.Value);
-            ImGui.TextColored(Client.GetItemColor(message[i++].Flags!.Value), itemName);
-        }
-
-        ImGui.SameLine(0, 0);
-        ImGui.Text(message[i++].Text);
-        ImGui.SameLine(0, 0);
-        ImGui.TextColored(Client.Green,
-            Client.LocationIdToLocationName(long.Parse(message[i].Text), message[i++].Player!.Value));
-        ImGui.SameLine(0, 0);
-        ImGui.Text(message[i++].Text);
     }
 }

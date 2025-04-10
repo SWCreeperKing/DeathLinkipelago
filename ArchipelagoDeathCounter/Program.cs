@@ -10,6 +10,7 @@ using ArchipelagoDeathCounter.LoggerConsole.Commands;
 using Backbone;
 using ImGuiNET;
 using Raylib_cs;
+using static Archipelago.MultiClient.Net.Enums.HintStatus;
 using static Archipelago.MultiClient.Net.Enums.ItemFlags;
 using static Backbone.Backbone;
 using Color = Raylib_cs.Color;
@@ -44,7 +45,7 @@ class UserInterface() : Backbone.Backbone("DeathLinkipelago", 650, 700)
         {
             //ignored
         }
-        
+
         Logger.Initialize();
         Logger.Log("init");
         CommandRegister.RegisterCommandFile(typeof(DefaultCommands));
@@ -133,16 +134,29 @@ public class ArchipelagoClient
 {
     public const long UUID = 0x0AF5F0AC;
 
+    public Dictionary<HintStatus, string> HintStatusText =
+        Enum.GetValues<HintStatus>().ToDictionary(hs => hs, hs => Enum.GetName(hs)!);
+
+    public Dictionary<HintStatus, Vector4> HintStatusColor = new()
+    {
+        [Found] = Green,
+        [Unspecified] = White,
+        [NoPriority] = SkyBlue,
+        [Avoid] = Red,
+        [Priority] = Purple,
+    };
+
     public APConnection Connection = new();
-    public Vector4 White = Color.White.ToV4();
-    public Vector4 DirtyWhite = new(0.95f, 0.95f, 0.81f, 1f);
-    public Vector4 Red = Color.Red.ToV4();
-    public Vector4 Green = Color.Green.ToV4();
-    public Vector4 Gold = Color.Gold.ToV4();
-    public Vector4 Blue = Color.Blue.ToV4();
-    public Vector4 SkyBlue = Color.SkyBlue.ToV4();
-    public Vector4 Purple = Color.Purple.ToV4();
-    public Vector4 DarkPurple = new(0.89f, 0.01f, 0.89f, 1f);
+    public static Vector4 White = Color.White.ToV4();
+    public static Vector4 DirtyWhite = new(0.95f, 0.95f, 0.81f, 1f);
+    public static Vector4 Red = Color.Red.ToV4();
+    public static Vector4 Green = Color.Green.ToV4();
+    public static Vector4 Gold = Color.Gold.ToV4();
+    public static Vector4 Blue = Color.Blue.ToV4();
+    public static Vector4 ChillBlue = new(0.39f, 0.58f, 0.91f, 1f);
+    public static Vector4 SkyBlue = Color.SkyBlue.ToV4();
+    public static Vector4 Purple = Color.Purple.ToV4();
+    public static Vector4 DarkPurple = new(0.89f, 0.01f, 0.89f, 1f);
     public string[]? Error;
     public string[] PlayerNames = [];
     public string[] PlayerGames = [];
@@ -295,7 +309,6 @@ public class ArchipelagoClient
                 ImGui.Text($"{Connection.UsedItems[item]}");
                 ImGui.TableNextColumn();
                 ImGui.Text($"{Connection.HeldItems[item]}");
-                ImGui.TableNextColumn();
             }
         }
 
@@ -317,7 +330,6 @@ public class ArchipelagoClient
                 ImGui.Text(blame);
                 ImGui.TableNextColumn();
                 ImGui.Text($"{amount}");
-                ImGui.TableNextColumn();
             }
 
             ImGui.TableNextRow();
@@ -334,7 +346,7 @@ public class ArchipelagoClient
     {
         var canAfford = Connection.GetItemAmount("Death Coin") > 0;
         ImGui.Text($"Shop Level: [{Connection.HeldItems["Progressive Death Shop"]}]");
-        if (ImGui.BeginTable("Shop Table", 4, TableFlags | ImGuiTableFlags.SizingFixedFit))
+        if (ImGui.BeginTable("Shop Table", 4, TableFlags | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Resizable))
         {
             ImGui.TableSetupColumn("Loc");
             ImGui.TableSetupColumn("Item");
@@ -374,8 +386,6 @@ public class ArchipelagoClient
                 {
                     ImGui.TextColored(Red, "Cannot Afford");
                 }
-
-                ImGui.TableNextColumn();
             }
         }
 
@@ -384,7 +394,7 @@ public class ArchipelagoClient
 
     public void RenderHintsTable()
     {
-        if (ImGui.BeginTable("Hint Table", 7, TableFlags | ImGuiTableFlags.SizingFixedFit))
+        if (ImGui.BeginTable("Hint Table", 7, TableFlags | ImGuiTableFlags.ScrollX))
         {
             ImGui.TableSetupColumn("Copy");
             ImGui.TableSetupColumn("Receiving Player");
@@ -408,8 +418,9 @@ public class ArchipelagoClient
                     ImGui.PushID($"copy: {i++}");
                     if (ImGui.Button("Copy"))
                     {
+                        var entrance = hint.Entrance.Trim() == "" ? "Vanilla Entrance" : hint.Entrance; 
                         Raylib.SetClipboardText(
-                            $"`{PlayerNames[hint.ReceivingPlayer]}`'s __{itemName}__ is in `{PlayerNames[hint.FindingPlayer]}`'s world at **{location}**");
+                            $"`{PlayerNames[hint.ReceivingPlayer]}`'s __{itemName}__ is in `{PlayerNames[hint.FindingPlayer]}`'s world at **{location}**\n-# {entrance}");
                     }
 
                     ImGui.PopID();
@@ -420,7 +431,7 @@ public class ArchipelagoClient
                     ImGui.TableNextColumn();
                     Connection.PrintPlayerName(hint.FindingPlayer);
                     ImGui.TableNextColumn();
-                    PrintHintStatus(hint.Status);
+                    ImGui.TextColored(HintStatusColor[hint.Status], HintStatusText[hint.Status]);
                     ImGui.TableNextColumn();
                     ImGui.TextColored(Green, location);
                     ImGui.TableNextColumn();
@@ -430,10 +441,8 @@ public class ArchipelagoClient
                     }
                     else
                     {
-                        ImGui.TextColored(SkyBlue, hint.Entrance);
+                        ImGui.TextColored(ChillBlue, hint.Entrance);
                     }
-
-                    ImGui.TableNextColumn();
                 }
             }
             catch (Exception e)
@@ -444,6 +453,7 @@ public class ArchipelagoClient
 
         ImGui.EndTable();
     }
+
 
     public void RenderPlayerTable()
     {
@@ -516,29 +526,6 @@ public class ArchipelagoClient
         if (item.Flags.HasFlag(Advancement)) return Gold;
         if (item.Flags.HasFlag(Trap) || item.Flags.HasFlag(NeverExclude)) return Blue;
         return SkyBlue;
-    }
-
-
-    public void PrintHintStatus(HintStatus status)
-    {
-        switch (status)
-        {
-            case HintStatus.Found:
-                ImGui.TextColored(Green, "Found");
-                break;
-            case HintStatus.Unspecified:
-                ImGui.TextColored(White, "Unspecified");
-                break;
-            case HintStatus.NoPriority:
-                ImGui.TextColored(SkyBlue, "No Priority");
-                break;
-            case HintStatus.Avoid:
-                ImGui.TextColored(Red, "Avoid");
-                break;
-            case HintStatus.Priority:
-                ImGui.TextColored(Purple, "Priority");
-                break;
-        }
     }
 
     public void OrderDeaths() => Deaths = Deaths.OrderBy(kv => kv.Value).ToDictionary(kv => kv.Key, kv => kv.Value);

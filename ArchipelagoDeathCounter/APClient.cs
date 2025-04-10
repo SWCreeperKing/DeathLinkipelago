@@ -8,6 +8,7 @@ using ImGuiNET;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static Archipelago.MultiClient.Net.Enums.ItemFlags;
+using static ArchipelagoClient;
 using static UserInterface;
 
 namespace ArchipelagoDeathCounter;
@@ -167,7 +168,7 @@ public class APConnection
 
         foreach (var (id, location) in scoutedLocations.OrderBy(loc => loc.Key))
         {
-            Locations[id - ArchipelagoClient.UUID] = location;
+            Locations[id - UUID] = location;
         }
 
         if (scoutedLocations.Count != 0) return;
@@ -207,6 +208,7 @@ public class APConnection
                 Client.AddDeath(source);
                 break;
             case PrintJsonPacket updatePacket:
+                Logger.Log(JsonConvert.SerializeObject(updatePacket.Data));
                 if (updatePacket.Data.Length == 1)
                 {
                     MessageClient.SendMessage(new ServerMessagePacket(updatePacket.Data.First().Text!));
@@ -220,7 +222,7 @@ public class APConnection
                 }
                 else if (updatePacket.Data[1].Text is " found their " or " sent ")
                 {
-                    ItemLog.SendMessage(updatePacket.Data);
+                    ItemLog.SendMessage(updatePacket.Data.Select(mp => new MessagePart(mp)).ToArray());
                 }
 
                 break;
@@ -229,7 +231,7 @@ public class APConnection
 
     public void PrintPlayerName(int slot)
         => ImGui.TextColored(
-            slot == PlayerSlot ? Client.DarkPurple : slot == 0 ? Client.Gold : Client.DirtyWhite, Client.PlayerNames[slot]);
+            slot == PlayerSlot ? DarkPurple : slot == 0 ? Gold : DirtyWhite, Client.PlayerNames[slot]);
 
     public int GetStatusNum(HintStatus status)
         => status switch
