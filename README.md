@@ -1,4 +1,1 @@
-Requires [.Net9](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
-
-currently windows only
-- (too lazy to build for linux/mac)
+Requires [.Net8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)

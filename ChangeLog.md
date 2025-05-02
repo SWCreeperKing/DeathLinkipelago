@@ -1,3 +1,16 @@
+# v.0.12
+
+---
+- [Client] Full remake in Godot from Raylib.cs + DearImgui
+- [Client] Added life shop
+- [Client] Added life coins
+- [Client] Fixed crashing other games by misfiling the deathlink packet
+- [Client] Added version compatability
+- [APWorld] Fixed (hopefully) some goal logic
+- [APWorld] Added version compatability
+- [Yaml] Added `seconds_per_life_coin` yaml setting
+- [Yaml] Added `use_global_counter` yaml setting
+
 # v.0.11.3hf
 
 ---

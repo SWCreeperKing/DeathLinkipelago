@@ -1,0 +1,421 @@
+[gd_scene load_steps=9 format=3 uid="uid://mdoa55dmcvm2"]
+
+[ext_resource type="Script" uid="uid://bmnyyh64t4kr0" path="res://Scripts/MainController.cs" id="1_r150o"]
+[ext_resource type="Theme" uid="uid://doy8rp1q74ye0" path="res://Resources/MainUITheme.tres" id="2_idj7w"]
+[ext_resource type="Script" uid="uid://uxqdbm1kb40w" path="res://Scripts/Login.cs" id="2_kln2b"]
+[ext_resource type="Script" uid="uid://cv512qqlylyg2" path="res://Scripts/Tables/BasicTextTable.cs" id="4_pbw6q"]
+[ext_resource type="Script" uid="uid://1bgkej2xcig6" path="res://Scripts/LinkButton.cs" id="4_rgh2o"]
+[ext_resource type="Script" uid="uid://br0dv0aqmj8ct" path="res://Scripts/DeathTracker.cs" id="5_bmxlf"]
+[ext_resource type="Script" uid="uid://wien8m4plo4y" path="res://Scripts/Tables/DeathShopTable.cs" id="5_jw32o"]
+[ext_resource type="Script" uid="uid://cmddw8jxil8uo" path="res://Scripts/Tables/LifeShopTable.cs" id="6_50glp"]
+
+[node name="PanelContainer" type="PanelContainer" node_paths=PackedStringArray("_Scenes", "_FunnyButton", "_Inventory", "_Deaths", "_LifeCoinStatus", "_SaveStatus", "_ShopLevel", "_ShopItems", "_DeathShop", "_LifeShop", "_Login", "Tracker")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_r150o")
+_Scenes = [NodePath("Login"), NodePath("Deathlinkipelago")]
+_FunnyButton = NodePath("Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer/Button")
+_Inventory = NodePath("Deathlinkipelago/Info/Info/Inventory/RichTextLabel")
+_Deaths = NodePath("Deathlinkipelago/Info/Info/Death Counter/RichTextLabel")
+_LifeCoinStatus = NodePath("Deathlinkipelago/Info/Info/Label3")
+_SaveStatus = NodePath("Deathlinkipelago/Info/Info/Label2")
+_ShopLevel = NodePath("Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer/Label")
+_ShopItems = NodePath("Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer/Label2")
+_DeathShop = NodePath("Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer/RichTextLabel")
+_LifeShop = NodePath("Deathlinkipelago/Shop/Death Shop/LifeShop/VBoxContainer/RichTextLabel2")
+_Login = NodePath("Login/Login")
+Tracker = NodePath("Deathlinkipelago/Info/Info/Death Tracker")
+
+[node name="Login" type="MarginContainer" parent="."]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="Login" type="VBoxContainer" parent="Login" node_paths=PackedStringArray("_Main", "_AddressEdit", "_PasswordEdit", "_PortEdit", "_SlotEdit", "_Login", "_ErrorLabel")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("2_kln2b")
+_Main = NodePath("../..")
+_AddressEdit = NodePath("LineEdit")
+_PasswordEdit = NodePath("LineEdit2")
+_PortEdit = NodePath("LineEdit3")
+_SlotEdit = NodePath("LineEdit4")
+_Login = NodePath("HBoxContainer/Button")
+_ErrorLabel = NodePath("Label")
+
+[node name="LineEdit" type="LineEdit" parent="Login/Login"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "archipelago.gg"
+placeholder_text = "Address"
+
+[node name="LineEdit2" type="LineEdit" parent="Login/Login"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+placeholder_text = "Password"
+secret = true
+
+[node name="LineEdit3" type="LineEdit" parent="Login/Login"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+placeholder_text = "Port"
+
+[node name="LineEdit4" type="LineEdit" parent="Login/Login"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+placeholder_text = "Slot"
+
+[node name="HSeparator" type="HSeparator" parent="Login/Login"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Login/Login"]
+layout_mode = 2
+
+[node name="VSeparator" type="VSeparator" parent="Login/Login/HBoxContainer"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Button" type="Button" parent="Login/Login/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Log In"
+
+[node name="VSeparator2" type="VSeparator" parent="Login/Login/HBoxContainer"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="Login/Login"]
+visible = false
+modulate = Color(1, 0.741176, 0.768627, 1)
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 18
+text = "ERROR"
+horizontal_alignment = 1
+
+[node name="HSeparator2" type="HSeparator" parent="Login/Login"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HSeparator3" type="HSeparator" parent="Login/Login"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Deathlinkipelago" type="TabContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+tab_alignment = 1
+current_tab = 0
+
+[node name="Info" type="ScrollContainer" parent="Deathlinkipelago"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="Info" type="VBoxContainer" parent="Deathlinkipelago/Info"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 7
+
+[node name="HSeparator" type="HSeparator" parent="Deathlinkipelago/Info/Info"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+
+[node name="Button2" type="Button" parent="Deathlinkipelago/Info/Info"]
+modulate = Color(1, 0.65098, 0.65098, 1)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Disconnect"
+
+[node name="Label2" type="Label" parent="Deathlinkipelago/Info/Info"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="Label3" type="Label" parent="Deathlinkipelago/Info/Info"]
+visible = false
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="Inventory" type="FoldableContainer" parent="Deathlinkipelago/Info/Info"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Inventory"
+title_alignment = 1
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Deathlinkipelago/Info/Info/Inventory"]
+layout_mode = 2
+focus_mode = 0
+bbcode_enabled = true
+fit_content = true
+autowrap_mode = 0
+horizontal_alignment = 1
+script = ExtResource("4_pbw6q")
+_Columns = Array[String](["Item Name", "Stock", "Used", "Total"])
+
+[node name="Death Tracker" type="FoldableContainer" parent="Deathlinkipelago/Info/Info" node_paths=PackedStringArray("Info")]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Death Tracker"
+title_alignment = 1
+script = ExtResource("5_bmxlf")
+Info = NodePath("Label2")
+
+[node name="Label2" type="Label" parent="Deathlinkipelago/Info/Info/Death Tracker"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="Death Counter" type="FoldableContainer" parent="Deathlinkipelago/Info/Info"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Death Counter"
+title_alignment = 1
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Deathlinkipelago/Info/Info/Death Counter"]
+layout_mode = 2
+focus_mode = 0
+bbcode_enabled = true
+fit_content = true
+autowrap_mode = 0
+horizontal_alignment = 1
+script = ExtResource("4_pbw6q")
+_Columns = Array[String](["Slot Name", "Deaths"])
+
+[node name="Shop" type="ScrollContainer" parent="Deathlinkipelago"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="Death Shop" type="VBoxContainer" parent="Deathlinkipelago/Shop"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HSeparator" type="HSeparator" parent="Deathlinkipelago/Shop/Death Shop"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+
+[node name="LifeShop" type="FoldableContainer" parent="Deathlinkipelago/Shop/Death Shop"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Life Shop"
+title_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Deathlinkipelago/Shop/Death Shop/LifeShop"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="Label3" type="Label" parent="Deathlinkipelago/Shop/Death Shop/LifeShop/VBoxContainer"]
+modulate = Color(1, 1, 1, 0.623529)
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 16
+text = "Everything costs 1 Life Coin"
+horizontal_alignment = 1
+
+[node name="RichTextLabel2" type="RichTextLabel" parent="Deathlinkipelago/Shop/Death Shop/LifeShop/VBoxContainer" node_paths=PackedStringArray("_Main")]
+layout_mode = 2
+size_flags_vertical = 3
+focus_mode = 0
+bbcode_enabled = true
+fit_content = true
+autowrap_mode = 0
+horizontal_alignment = 1
+script = ExtResource("6_50glp")
+_Main = NodePath("../../../../../..")
+_Columns = Array[String](["", "Item"])
+
+[node name="DeathShop" type="FoldableContainer" parent="Deathlinkipelago/Shop/Death Shop"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Death Shop"
+title_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Deathlinkipelago/Shop/Death Shop/DeathShop"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="Label" type="Label" parent="Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="Label2" type="Label" parent="Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="Button" type="Button" parent="Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Funny Button"
+
+[node name="Label3" type="Label" parent="Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer"]
+modulate = Color(1, 1, 1, 0.623529)
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 16
+text = "Everything costs 1 Death Coin"
+horizontal_alignment = 1
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer" node_paths=PackedStringArray("_Main")]
+layout_mode = 2
+size_flags_vertical = 3
+focus_mode = 0
+bbcode_enabled = true
+fit_content = true
+autowrap_mode = 0
+horizontal_alignment = 1
+script = ExtResource("5_jw32o")
+_Main = NodePath("../../../../../..")
+_Columns = Array[String](["", "Item #", "Item", "Slot", "Game"])
+
+[node name="Credits" type="ScrollContainer" parent="Deathlinkipelago"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Deathlinkipelago/Credits"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="Credits" type="VBoxContainer" parent="Deathlinkipelago/Credits/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HSeparator" type="HSeparator" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Button" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Archipelago"
+script = ExtResource("4_rgh2o")
+_Link = "https://archipelago.gg/"
+
+[node name="HSeparator2" type="HSeparator" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Label" type="Label" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Tools"
+horizontal_alignment = 1
+
+[node name="Button2" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Godot 4.5 (dev 3)"
+script = ExtResource("4_rgh2o")
+_Link = "https://godotengine.org/"
+
+[node name="Button3" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "C# MultiClient"
+script = ExtResource("4_rgh2o")
+_Link = "https://github.com/ArchipelagoMW/Archipelago.MultiClient.Net"
+
+[node name="Button4" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Rider IDE"
+script = ExtResource("4_rgh2o")
+_Link = "https://www.jetbrains.com/rider/"
+
+[node name="HSeparator4" type="HSeparator" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Label2" type="Label" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Developer"
+horizontal_alignment = 1
+
+[node name="Button5" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "SW_CreeperKing"
+script = ExtResource("4_rgh2o")
+_Link = "https://linktr.ee/swcreeperking"
+
+[node name="HSeparator5" type="HSeparator" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Label3" type="Label" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Icon Artist"
+horizontal_alignment = 1
+
+[node name="Button6" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 24
+text = "Raphael2512"
+script = ExtResource("4_rgh2o")
+_Link = "https://linktr.ee/raphael2512"
+
+[connection signal="pressed" from="Deathlinkipelago/Info/Info/Button2" to="." method="Disconnect"]

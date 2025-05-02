@@ -1,0 +1,38 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="DeathLinkipelago"
+run/main_scene="uid://mdoa55dmcvm2"
+config/features=PackedStringArray("4.5", "C#", "Forward Plus")
+run/max_fps=20
+boot_splash/image="uid://c0jllp4q6y0wa"
+config/icon="uid://c0jllp4q6y0wa"
+config/windows_native_icon="res://Assets/Icon/Icon.ico"
+
+[display]
+
+window/size/viewport_width=650
+window/size/viewport_height=700
+window/stretch/aspect="ignore"
+
+[dotnet]
+
+project/assembly_name="DeathLinkipelago"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/easy_charts/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

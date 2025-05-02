@@ -1,0 +1,21 @@
+<Project Sdk="Godot.NET.Sdk/4.5.0-dev.3">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="ChangeLog.md" />
+    <Content Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Archipelago.MultiClient.Net">
+      <HintPath>Lib\Archipelago.MultiClient.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="CreepyUtil.Archipelago">
+      <HintPath>..\..\C#\CreepyUtil\CreepyUtil.Archipelago\bin\Debug\net8.0\CreepyUtil.Archipelago.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Lib\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

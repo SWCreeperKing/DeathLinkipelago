@@ -1,0 +1,80 @@
+[gd_resource type="Theme" load_steps=9 format=3 uid="uid://doy8rp1q74ye0"]
+
+[ext_resource type="FontFile" uid="uid://dlg8eleo800rl" path="res://Assets/Font/CascadiaMono.ttf" id="1_nvwvg"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r150o"]
+bg_color = Color(0.27451, 0.27451, 0.27451, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5mifo"]
+content_margin_left = 7.0
+content_margin_right = 7.0
+draw_center = false
+border_width_left = 1
+border_width_top = 4
+border_width_right = 1
+border_color = Color(0.610364, 0, 0.0718371, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nvwvg"]
+draw_center = false
+border_width_bottom = 4
+border_color = Color(0.489622, 0.489622, 0.489622, 1)
+border_blend = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hdcpn"]
+content_margin_left = 7.0
+content_margin_right = 7.0
+draw_center = false
+border_width_left = 1
+border_width_top = 4
+border_width_right = 1
+border_color = Color(0.875325, 0.940277, 0.995156, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dywtt"]
+content_margin_left = 7.0
+content_margin_right = 7.0
+draw_center = false
+border_width_left = 1
+border_width_top = 4
+border_width_right = 1
+border_color = Color(0.176003, 0.570351, 0.837393, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fryjx"]
+content_margin_left = 7.0
+content_margin_right = 7.0
+draw_center = false
+border_width_left = 1
+border_width_top = 4
+border_width_right = 1
+border_color = Color(0.140447, 0.140447, 0.140447, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8s6ah"]
+bg_color = Color(0.0107455, 0.0353842, 0.0401603, 1)
+
+[resource]
+AcceptDialog/fonts/title_font = ExtResource("1_nvwvg")
+Button/fonts/font = ExtResource("1_nvwvg")
+CheckBox/fonts/font = ExtResource("1_nvwvg")
+FoldableContainer/font_sizes/font_size = 16
+FoldableContainer/fonts/font = ExtResource("1_nvwvg")
+HSplitContainer/styles/split_bar_background = SubResource("StyleBoxFlat_r150o")
+Label/fonts/font = ExtResource("1_nvwvg")
+LineEdit/fonts/font = ExtResource("1_nvwvg")
+OptionButton/fonts/font = ExtResource("1_nvwvg")
+RichTextLabel/font_sizes/bold_font_size = 18
+RichTextLabel/font_sizes/bold_italics_font_size = 18
+RichTextLabel/font_sizes/italics_font_size = 18
+RichTextLabel/font_sizes/mono_font_size = 18
+RichTextLabel/font_sizes/normal_font_size = 18
+RichTextLabel/fonts/bold_font = ExtResource("1_nvwvg")
+RichTextLabel/fonts/bold_italics_font = ExtResource("1_nvwvg")
+RichTextLabel/fonts/italics_font = ExtResource("1_nvwvg")
+RichTextLabel/fonts/mono_font = ExtResource("1_nvwvg")
+RichTextLabel/fonts/normal_font = ExtResource("1_nvwvg")
+TabContainer/constants/icon_separation = 7
+TabContainer/fonts/font = ExtResource("1_nvwvg")
+TabContainer/styles/tab_disabled = SubResource("StyleBoxFlat_5mifo")
+TabContainer/styles/tab_focus = SubResource("StyleBoxFlat_nvwvg")
+TabContainer/styles/tab_hovered = SubResource("StyleBoxFlat_hdcpn")
+TabContainer/styles/tab_selected = SubResource("StyleBoxFlat_dywtt")
+TabContainer/styles/tab_unselected = SubResource("StyleBoxFlat_fryjx")
+TabContainer/styles/tabbar_background = SubResource("StyleBoxFlat_8s6ah")
