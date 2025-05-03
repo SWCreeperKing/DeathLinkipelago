@@ -1,3 +1,7 @@
+# v.0.12.1hf
+- [Client] Stopped controller inputs
+- [Client] Now correctly sends out shop hints for progressive items in shop
+
 # v.0.12
 
 ---
@@ -5,11 +9,13 @@
 - [Client] Added life shop
 - [Client] Added life coins
 - [Client] Fixed crashing other games by misfiling the deathlink packet
-- [Client] Added version compatability
+- [Client] Added version compatibility
+- [Client] Progressive items are now scout hinted
 - [APWorld] Fixed (hopefully) some goal logic
 - [APWorld] Added version compatability
 - [Yaml] Added `seconds_per_life_coin` yaml setting
 - [Yaml] Added `use_global_counter` yaml setting
+
 
 # v.0.11.3hf
 

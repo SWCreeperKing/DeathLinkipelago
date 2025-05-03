@@ -224,14 +224,15 @@ public partial class MainController : Node
             AddDeath(source);
             RefreshUI = true;
         };
-        Client.Session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce,
-                   Client.MissingLocations
-                         .Where(loc
-                              => loc.Value.Flags.HasFlag(ItemFlags.Advancement))
-                         .Select(kv => kv.Key)
-                         .ToArray())
+        var scoutHintList = Client.MissingLocations
+                                  .Where(loc
+                                       => loc.Value.Flags.HasFlag(ItemFlags.Advancement))
+                                  .Select(kv => kv.Value.LocationId)
+                                  .ToArray();
+        Client.Session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, scoutHintList)
               .GetAwaiter()
               .GetResult();
+        GD.Print($"Scout Hinting: [{string.Join(", ", scoutHintList)}]");
         Reset();
         LoadSlotData();
         SwitchScene(1);
@@ -305,6 +306,6 @@ public partial class MainController : Node
     }
 
     public void Disconnect() => _Login.TryDisconnection();
-    
+
     public int this[string item] => Inventory[item] - InventoryUsed[item];
 }
