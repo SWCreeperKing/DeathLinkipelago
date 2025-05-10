@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://mdoa55dmcvm2"]
+[gd_scene load_steps=12 format=3 uid="uid://mdoa55dmcvm2"]
 
 [ext_resource type="Script" uid="uid://bmnyyh64t4kr0" path="res://Scripts/MainController.cs" id="1_r150o"]
 [ext_resource type="Theme" uid="uid://doy8rp1q74ye0" path="res://Resources/MainUITheme.tres" id="2_idj7w"]
@@ -8,8 +8,11 @@
 [ext_resource type="Script" uid="uid://br0dv0aqmj8ct" path="res://Scripts/DeathTracker.cs" id="5_bmxlf"]
 [ext_resource type="Script" uid="uid://wien8m4plo4y" path="res://Scripts/Tables/DeathShopTable.cs" id="5_jw32o"]
 [ext_resource type="Script" uid="uid://cmddw8jxil8uo" path="res://Scripts/Tables/LifeShopTable.cs" id="6_50glp"]
+[ext_resource type="Script" uid="uid://bfanr1p00a0br" path="res://Scripts/Charts/DeathChart.cs" id="6_vy5pj"]
+[ext_resource type="FontFile" uid="uid://dlg8eleo800rl" path="res://Assets/Font/CascadiaMono.ttf" id="7_bmxlf"]
+[ext_resource type="Script" uid="uid://8lnrr3qsbjfq" path="res://Scripts/Charts/BlameChart.cs" id="8_4kpch"]
 
-[node name="PanelContainer" type="PanelContainer" node_paths=PackedStringArray("_Scenes", "_FunnyButton", "_Inventory", "_Deaths", "_LifeCoinStatus", "_SaveStatus", "_ShopLevel", "_ShopItems", "_DeathShop", "_LifeShop", "_Login", "Tracker")]
+[node name="PanelContainer" type="PanelContainer" node_paths=PackedStringArray("_Scenes", "_FunnyButton", "_Inventory", "_Deaths", "_GrassStatus", "_LifeCoinStatus", "_SaveStatus", "_ShopLevel", "_ShopItems", "_DeathShop", "_LifeShop", "_Login", "Tracker")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -21,7 +24,8 @@ script = ExtResource("1_r150o")
 _Scenes = [NodePath("Login"), NodePath("Deathlinkipelago")]
 _FunnyButton = NodePath("Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer/Button")
 _Inventory = NodePath("Deathlinkipelago/Info/Info/Inventory/RichTextLabel")
-_Deaths = NodePath("Deathlinkipelago/Info/Info/Death Counter/RichTextLabel")
+_Deaths = NodePath("Deathlinkipelago/Info/Info/Death Tracker/VBoxContainer/RichTextLabel")
+_GrassStatus = NodePath("Deathlinkipelago/Info/Info/Label4")
 _LifeCoinStatus = NodePath("Deathlinkipelago/Info/Info/Label3")
 _SaveStatus = NodePath("Deathlinkipelago/Info/Info/Label2")
 _ShopLevel = NodePath("Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer/Label")
@@ -56,7 +60,6 @@ _ErrorLabel = NodePath("Label")
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "archipelago.gg"
 placeholder_text = "Address"
 
@@ -64,7 +67,6 @@ placeholder_text = "Address"
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 placeholder_text = "Password"
 secret = true
 
@@ -72,14 +74,12 @@ secret = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 placeholder_text = "Port"
 
 [node name="LineEdit4" type="LineEdit" parent="Login/Login"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 placeholder_text = "Slot"
 
 [node name="HSeparator" type="HSeparator" parent="Login/Login"]
@@ -99,7 +99,6 @@ size_flags_horizontal = 3
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Log In"
 
 [node name="VSeparator2" type="VSeparator" parent="Login/Login/HBoxContainer"]
@@ -112,7 +111,6 @@ visible = false
 modulate = Color(1, 0.741176, 0.768627, 1)
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 18
 text = "ERROR"
 horizontal_alignment = 1
 
@@ -131,7 +129,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 tab_alignment = 1
 current_tab = 0
 
@@ -154,26 +151,27 @@ modulate = Color(1, 0.65098, 0.65098, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Disconnect"
 
 [node name="Label2" type="Label" parent="Deathlinkipelago/Info/Info"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 
 [node name="Label3" type="Label" parent="Deathlinkipelago/Info/Info"]
 visible = false
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="Label4" type="Label" parent="Deathlinkipelago/Info/Info"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
 horizontal_alignment = 1
 
 [node name="Inventory" type="FoldableContainer" parent="Deathlinkipelago/Info/Info"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Inventory"
 title_alignment = 1
 
@@ -187,29 +185,47 @@ horizontal_alignment = 1
 script = ExtResource("4_pbw6q")
 _Columns = Array[String](["Item Name", "Stock", "Used", "Total"])
 
-[node name="Death Tracker" type="FoldableContainer" parent="Deathlinkipelago/Info/Info" node_paths=PackedStringArray("Info")]
+[node name="Death Tracker" type="FoldableContainer" parent="Deathlinkipelago/Info/Info" node_paths=PackedStringArray("Info", "Chart", "BlamePi")]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Death Tracker"
 title_alignment = 1
 script = ExtResource("5_bmxlf")
-Info = NodePath("Label2")
+Info = NodePath("VBoxContainer/Label2")
+Chart = NodePath("VBoxContainer/ColorRect")
+BlamePi = NodePath("VBoxContainer/ColorRect2")
 
-[node name="Label2" type="Label" parent="Deathlinkipelago/Info/Info/Death Tracker"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Deathlinkipelago/Info/Info/Death Tracker"]
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="Deathlinkipelago/Info/Info/Death Tracker/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 
-[node name="Death Counter" type="FoldableContainer" parent="Deathlinkipelago/Info/Info"]
+[node name="ColorRect" type="ColorRect" parent="Deathlinkipelago/Info/Info/Death Tracker/VBoxContainer" node_paths=PackedStringArray("_Tooltip")]
+custom_minimum_size = Vector2(600, 200)
+layout_mode = 2
+color = Color(0.231373, 0.231373, 0.231373, 0.458824)
+script = ExtResource("6_vy5pj")
+_Font = ExtResource("7_bmxlf")
+_Tooltip = NodePath("../Label4")
+
+[node name="ColorRect2" type="ColorRect" parent="Deathlinkipelago/Info/Info/Death Tracker/VBoxContainer" node_paths=PackedStringArray("_Tooltip")]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+color = Color(0.231373, 0.231373, 0.231373, 0.458824)
+script = ExtResource("8_4kpch")
+_Tooltip = NodePath("../Label4")
+
+[node name="Label4" type="Label" parent="Deathlinkipelago/Info/Info/Death Tracker/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
-text = "Death Counter"
-title_alignment = 1
+text = "
+"
+horizontal_alignment = 1
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Deathlinkipelago/Info/Info/Death Counter"]
+[node name="RichTextLabel" type="RichTextLabel" parent="Deathlinkipelago/Info/Info/Death Tracker/VBoxContainer"]
 layout_mode = 2
 focus_mode = 0
 bbcode_enabled = true
@@ -236,7 +252,6 @@ layout_mode = 2
 [node name="LifeShop" type="FoldableContainer" parent="Deathlinkipelago/Shop/Death Shop"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Life Shop"
 title_alignment = 1
 
@@ -248,7 +263,6 @@ theme_override_constants/separation = 7
 modulate = Color(1, 1, 1, 0.623529)
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 16
 text = "Everything costs 1 Life Coin"
 horizontal_alignment = 1
 
@@ -267,7 +281,6 @@ _Columns = Array[String](["", "Item"])
 [node name="DeathShop" type="FoldableContainer" parent="Deathlinkipelago/Shop/Death Shop"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Death Shop"
 title_alignment = 1
 
@@ -278,27 +291,24 @@ theme_override_constants/separation = 7
 [node name="Label" type="Label" parent="Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 
 [node name="Label2" type="Label" parent="Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 
 [node name="Button" type="Button" parent="Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer"]
+modulate = Color(0.775063, 0.775063, 0.775063, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Funny Button"
 
 [node name="Label3" type="Label" parent="Deathlinkipelago/Shop/Death Shop/DeathShop/VBoxContainer"]
 modulate = Color(1, 1, 1, 0.623529)
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 16
 text = "Everything costs 1 Death Coin"
 horizontal_alignment = 1
 
@@ -312,7 +322,7 @@ autowrap_mode = 0
 horizontal_alignment = 1
 script = ExtResource("5_jw32o")
 _Main = NodePath("../../../../../..")
-_Columns = Array[String](["", "Item #", "Item", "Slot", "Game"])
+_Columns = Array[String](["", "Item #", "Item", "Slot", "Game", "Priority"])
 
 [node name="Credits" type="ScrollContainer" parent="Deathlinkipelago"]
 visible = false
@@ -340,7 +350,6 @@ theme_override_constants/separation = 5
 [node name="Button" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Archipelago"
 script = ExtResource("4_rgh2o")
 _Link = "https://archipelago.gg/"
@@ -352,14 +361,12 @@ theme_override_constants/separation = 5
 [node name="Label" type="Label" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Tools"
 horizontal_alignment = 1
 
 [node name="Button2" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Godot 4.5 (dev 3)"
 script = ExtResource("4_rgh2o")
 _Link = "https://godotengine.org/"
@@ -367,7 +374,6 @@ _Link = "https://godotengine.org/"
 [node name="Button3" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "C# MultiClient"
 script = ExtResource("4_rgh2o")
 _Link = "https://github.com/ArchipelagoMW/Archipelago.MultiClient.Net"
@@ -375,7 +381,6 @@ _Link = "https://github.com/ArchipelagoMW/Archipelago.MultiClient.Net"
 [node name="Button4" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Rider IDE"
 script = ExtResource("4_rgh2o")
 _Link = "https://www.jetbrains.com/rider/"
@@ -387,14 +392,12 @@ theme_override_constants/separation = 6
 [node name="Label2" type="Label" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Developer"
 horizontal_alignment = 1
 
 [node name="Button5" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "SW_CreeperKing"
 script = ExtResource("4_rgh2o")
 _Link = "https://linktr.ee/swcreeperking"
@@ -406,14 +409,12 @@ theme_override_constants/separation = 5
 [node name="Label3" type="Label" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Icon Artist"
 horizontal_alignment = 1
 
 [node name="Button6" type="Button" parent="Deathlinkipelago/Credits/MarginContainer/Credits"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-theme_override_font_sizes/font_size = 24
 text = "Raphael2512"
 script = ExtResource("4_rgh2o")
 _Link = "https://linktr.ee/raphael2512"

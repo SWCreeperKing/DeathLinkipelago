@@ -142,10 +142,11 @@ public partial class Login : Control
         LastSave = 0;
         LastDeathTrap = 0;
         NextLifeCoin = 0;
-        ShopLevel = 0;
+        ShopLevel = 1;
         HasChangedSinceLastSave = false;
         Reset();
         HintedItems = [];
+        PrioritizedItems = [];
 
         Inventory = new()
         {

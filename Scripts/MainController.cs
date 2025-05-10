@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Archipelago.MultiClient.Net.Enums;
-using Archipelago.MultiClient.Net.Packets;
 using CreepyUtil.Archipelago;
+using DeathLinkipelago.Scripts.Charts;
+using DeathLinkipelago.Scripts.Commands;
 using DeathLinkipelago.Scripts.Tables;
 using Godot;
 using Newtonsoft.Json;
@@ -15,7 +17,7 @@ namespace DeathLinkipelago.Scripts;
 
 public partial class MainController : Node
 {
-    public const string ApWorldCompatibilityVersion = "v.0.12";
+    public const string ApWorldCompatibilityVersion = "v.0.13.0";
 
     public static string SaveDir =
         $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}/DeathLinkipelago";
@@ -32,13 +34,16 @@ public partial class MainController : Node
 
     public static ApClient Client;
     public static Config Config;
-    public static Dictionary<string, int> DeathCounter = [];
+    public static ConcurrentDictionary<string, int> DeathCounter = [];
     public static double LastSave;
     public static double LastDeathTrap;
     public static double NextLifeCoin;
-    public static int ShopLevel;
+    public static int ShopLevel = 1;
     public static bool HasChangedSinceLastSave;
     public static long[] HintedItems = [];
+    public static HashSet<long> PrioritizedItems = [];
+    public static bool CanGoal;
+    public static bool HasGoaled;
 
     public static Dictionary<string, int> Inventory = new()
     {
@@ -56,6 +61,7 @@ public partial class MainController : Node
     [Export] private Button _FunnyButton;
     [Export] private BasicTextTable _Inventory;
     [Export] private BasicTextTable _Deaths;
+    [Export] private Label _GrassStatus;
     [Export] private Label _LifeCoinStatus;
     [Export] private Label _SaveStatus;
     [Export] private Label _ShopLevel;
@@ -103,7 +109,7 @@ public partial class MainController : Node
         if (Client.PushUpdatedVariables(false, out var hints))
         {
             HintedItems = hints
-                         .Where(hint => hint.FindingPlayer == Client.PlayerSlot)
+                         .Where(hint => hint.FindingPlayer == Client.PlayerSlot && hint.Status == HintStatus.Priority)
                          .Select(hint => hint.LocationId - Client.UUID)
                          .ToArray();
             RefreshUI = true;
@@ -111,17 +117,24 @@ public partial class MainController : Node
 
         foreach (var item in Client.GetOutstandingItems())
         {
-            if (item!.ItemName is "Progressive Death Shop")
+            switch (item!.ItemName)
             {
-                ShopLevel++;
-                RefreshUI = true;
-                continue;
+                case "Death Grass":
+                    CanGoal = true;
+                    GoalCheck();
+                    continue;
+                case "Progressive Death Shop":
+                    ShopLevel++;
+                    RefreshUI = true;
+                    continue;
             }
 
             if (!Inventory.ContainsKey(item!.ItemName)) continue;
             Inventory[item.ItemName]++;
             RefreshUI = true;
         }
+
+        _GrassStatus.Text = $"Can touch grass? [{(CanGoal ? "yes!" : "not yet")}]"; 
 
         if (LastDeathTrap <= 0 && this["Death Trap"] > 0)
         {
@@ -169,7 +182,6 @@ public partial class MainController : Node
         RefreshUI = false;
 
         _FunnyButton.Visible = Client is not null && Client.IsConnected && Config.HasFunnyButton;
-        _ShopLevel.Visible = _ShopItems.Visible = ShopLevel > 0;
         _ShopLevel.Text = $"Shop Lv.{ShopLevel}/{Math.Ceiling(Config.DeathCheckAmount / 10f)}";
         var totalItems = Config.DeathCheckAmount;
         var gottenItems = totalItems - Client.MissingLocations.Count;
@@ -186,7 +198,11 @@ public partial class MainController : Node
                               })
                              .ToList());
         _Deaths.UpdateData(DeathCounter.OrderByDescending(kv => kv.Value)
-                                       .Select(kv => new[] { kv.Key, $"{kv.Value}" })
+                                       .Select(kv => new[]
+                                        {
+                                            $"[color={BlameChart.MakeRandomColor(kv.Key).ToHtml()}]{kv.Key.Replace("[", "[lb]")}[/color]",
+                                            $"{kv.Value}"
+                                        })
                                        .ToList());
         _DeathShop.Update(Client.MissingLocations);
         _LifeShop.Update();
@@ -214,30 +230,31 @@ public partial class MainController : Node
 
     public void Connected()
     {
-        Client.Session.Socket.PacketReceived += packet =>
+        HasGoaled = false;
+        CanGoal = false;
+        Client.OnDeathLinkPacketReceived += (_, packet) =>
         {
-            if (packet is not BouncedPacket bp) return;
-            if (!bp.Tags.Contains("DeathLink")) return;
-            var source = bp.Data.TryGetValue("source", out var sourceToken)
+            var source = packet.Data.TryGetValue("source", out var sourceToken)
                 ? sourceToken.ToString()
                 : "Unknown";
             AddDeath(source);
             RefreshUI = true;
         };
-        var scoutHintList = Client.MissingLocations
-                                  .Where(loc
-                                       => loc.Value.Flags.HasFlag(ItemFlags.Advancement))
-                                  .Select(kv => kv.Value.LocationId)
-                                  .ToArray();
-        Client.Session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, scoutHintList)
-              .GetAwaiter()
-              .GetResult();
-        GD.Print($"Scout Hinting: [{string.Join(", ", scoutHintList)}]");
         Reset();
         LoadSlotData();
         SwitchScene(1);
+        BlameChart.RefreshUi = true;
+        GoalCheck();
+        Client.SendLocation(0);
+        Client.RegisterCommand(new BuyCommand());
+        Client.RegisterCommand(new InventoryCheckCommand());
+    }
 
-        if (Client.MissingLocations.Count != 0) return;
+    public static void GoalCheck()
+    {
+        if (Client is null || !Client.IsConnected || !Client.Session.Socket.Connected) return;
+        if (Client.MissingLocations.Count != 0 || !CanGoal || HasGoaled) return;
+        HasGoaled = true;
         Client.Goal();
     }
 
@@ -248,9 +265,11 @@ public partial class MainController : Node
             (long)slotData["death_check_amount"],
             (bool)slotData["send_traps_after_goal"],
             (bool)slotData["has_funny_button"],
-            (bool)slotData["use_global_counter"]);
+            (bool)slotData["use_global_counter"],
+            (bool)slotData["send_scout_hints"]);
 
         _LifeCoinStatus.Visible = Config.SecondsPerLifeCoin != 0;
+        PrioritizedItems = Client.GetFromStorage("prioritized items", def: PrioritizedItems);
         InventoryUsed = Client.GetFromStorage("inventory", def: InventoryUsed);
         var inv = Client.GetFromStorage("life inventory", def: Inventory);
         LifeShopBought = new Dictionary<string, int>(inv);
@@ -269,6 +288,7 @@ public partial class MainController : Node
         Client.SendToStorage("inventory", InventoryUsed);
         Client.SendToStorage("life coins", Inventory["Life Coin"]);
         Client.SendToStorage("life inventory", LifeShopBought);
+        Client.SendToStorage("prioritized items", PrioritizedItems);
     }
 
     public void UpdateDeaths()
@@ -307,5 +327,13 @@ public partial class MainController : Node
 
     public void Disconnect() => _Login.TryDisconnection();
 
-    public int this[string item] => Inventory[item] - InventoryUsed[item];
+    public static int GetItemAmount(string item) => Inventory[item] - InventoryUsed[item];
+    public int this[string item] => GetItemAmount(item);
+
+    public static void BuyItem(int itemNumber)
+    {
+        Client.SendLocation(itemNumber);
+        InventoryUsed["Death Coin"]++;
+        GoalCheck();
+    }
 }
