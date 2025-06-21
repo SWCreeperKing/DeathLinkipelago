@@ -8,14 +8,8 @@
     <Content Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Archipelago.MultiClient.Net">
-      <HintPath>Lib\Archipelago.MultiClient.Net.dll</HintPath>
-    </Reference>
-    <Reference Include="CreepyUtil.Archipelago">
-      <HintPath>Lib\CreepyUtil.Archipelago.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>Lib\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="BundledApClient">
+      <HintPath>Lib\BundledApClient.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
