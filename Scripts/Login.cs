@@ -11,6 +11,7 @@ namespace DeathLinkipelago.Scripts;
 
 public partial class Login : Control
 {
+    [Export] private string _Version;
     [Export] private MainController _Main;
     [Export] private LineEdit _AddressEdit;
     [Export] private LineEdit _PasswordEdit;
@@ -18,6 +19,7 @@ public partial class Login : Control
     [Export] private LineEdit _SlotEdit;
     [Export] private Button _Login;
     [Export] private Label _ErrorLabel;
+    [Export] private Label _VersionLabel;
     private string _LastText;
 
     public string Address
@@ -48,6 +50,7 @@ public partial class Login : Control
 
     public override void _Ready()
     {
+        _VersionLabel.Text += _Version;
         _PortEdit.TextChanged += s =>
         {
             if (s.Trim() == "" || s.IsValidInt())

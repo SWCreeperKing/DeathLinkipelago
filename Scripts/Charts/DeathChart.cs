@@ -10,7 +10,7 @@ public partial class DeathChart : ColorRect
 {
     [Export] private Font _Font;
     [Export] private Label _Tooltip;
-    private readonly List<PointData> _DataPoints = new(50);
+    private readonly LimitedList<PointData> _DataPoints = new(50);
     private Vector2 _CharSize;
     private Vector2[] _CachedPoints = [];
     private int _SelectedPoint = -1;
@@ -22,8 +22,9 @@ public partial class DeathChart : ColorRect
         if (_DataPoints.Count == 0) return;
         // initial calculations for high, mid, and low points
         var size = Size;
-        var highRaw = _DataPoints.Max(point => point.TimeSinceLastDeath);
-        var lowRaw = _DataPoints.Min(point => point.TimeSinceLastDeath);
+        var list = _DataPoints.GetList;
+        var highRaw = list.Max(point => point.TimeSinceLastDeath);
+        var lowRaw = list.Min(point => point.TimeSinceLastDeath);
         var mid = Math.Sqrt(highRaw * lowRaw);
         var highY = (float)Math.Ceiling(_CharSize.Y / 2f);
         var midY = size.Y / 2f;
@@ -60,10 +61,10 @@ public partial class DeathChart : ColorRect
         var step = width / (_DataPoints.Count - 1);
         step = float.IsInfinity(step) ? width / 2 : step;
         var normalizedHeight = lowY - highY;
-
-        var convertedPoints = _DataPoints.All(point => point.TimeSinceLastDeath is >= 0 and <= 1)
-            ? _DataPoints.Select(point => point.TimeSinceLastDeath)
-            : _DataPoints.Select(point => Math.Log(point.TimeSinceLastDeath, highRaw)).ToArray();
+        
+        var convertedPoints = list.All(point => point.TimeSinceLastDeath is >= 0 and <= 1)
+            ? list.Select(point => point.TimeSinceLastDeath)
+            : list.Select(point => Math.Log(point.TimeSinceLastDeath, highRaw)).ToArray();
         var lowestPoint = convertedPoints.Min();
 
         _CachedPoints = convertedPoints // math support: @unpingabot

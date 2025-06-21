@@ -1,6 +1,11 @@
-[gd_resource type="Theme" load_steps=9 format=3 uid="uid://doy8rp1q74ye0"]
+[gd_resource type="Theme" load_steps=14 format=3 uid="uid://doy8rp1q74ye0"]
 
+[ext_resource type="FontFile" uid="uid://cv00jy685vk0g" path="res://Assets/Font/CascadiaCode-Bold.ttf" id="1_5mifo"]
+[ext_resource type="Texture2D" uid="uid://32132x7kc10h" path="res://Assets/Images/UI/Checkmark.png" id="1_fryjx"]
 [ext_resource type="FontFile" uid="uid://dlg8eleo800rl" path="res://Assets/Font/CascadiaMono.ttf" id="1_nvwvg"]
+[ext_resource type="Texture2D" uid="uid://dsg775cgh8xl4" path="res://Assets/Images/UI/XMark.png" id="2_3xqnl"]
+[ext_resource type="FontFile" uid="uid://cr2ocqso1vqyj" path="res://Assets/Font/CascadiaCode-BoldItalic.ttf" id="2_hdcpn"]
+[ext_resource type="FontFile" uid="uid://drv0l4h635o1o" path="res://Assets/Font/CascadiaCode-Italic.ttf" id="3_fryjx"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r150o"]
 bg_color = Color(0.27451, 0.27451, 0.27451, 1)
@@ -51,34 +56,22 @@ border_color = Color(0.140447, 0.140447, 0.140447, 1)
 bg_color = Color(0.0107455, 0.0353842, 0.0401603, 1)
 
 [resource]
-AcceptDialog/font_sizes/title_font_size = 18
-AcceptDialog/fonts/title_font = ExtResource("1_nvwvg")
-Button/font_sizes/font_size = 18
-Button/fonts/font = ExtResource("1_nvwvg")
-CheckBox/font_sizes/font_size = 18
-CheckBox/fonts/font = ExtResource("1_nvwvg")
-FoldableContainer/font_sizes/font_size = 18
-FoldableContainer/fonts/font = ExtResource("1_nvwvg")
+default_font = ExtResource("1_nvwvg")
+default_font_size = 18
+CheckBox/icons/checked = ExtResource("1_fryjx")
+CheckBox/icons/unchecked = ExtResource("2_3xqnl")
 HSplitContainer/styles/split_bar_background = SubResource("StyleBoxFlat_r150o")
-Label/font_sizes/font_size = 18
-Label/fonts/font = ExtResource("1_nvwvg")
-LineEdit/font_sizes/font_size = 18
-LineEdit/fonts/font = ExtResource("1_nvwvg")
-OptionButton/font_sizes/font_size = 18
-OptionButton/fonts/font = ExtResource("1_nvwvg")
 RichTextLabel/font_sizes/bold_font_size = 18
 RichTextLabel/font_sizes/bold_italics_font_size = 18
 RichTextLabel/font_sizes/italics_font_size = 18
 RichTextLabel/font_sizes/mono_font_size = 18
 RichTextLabel/font_sizes/normal_font_size = 18
-RichTextLabel/fonts/bold_font = ExtResource("1_nvwvg")
-RichTextLabel/fonts/bold_italics_font = ExtResource("1_nvwvg")
-RichTextLabel/fonts/italics_font = ExtResource("1_nvwvg")
+RichTextLabel/fonts/bold_font = ExtResource("1_5mifo")
+RichTextLabel/fonts/bold_italics_font = ExtResource("2_hdcpn")
+RichTextLabel/fonts/italics_font = ExtResource("3_fryjx")
 RichTextLabel/fonts/mono_font = ExtResource("1_nvwvg")
 RichTextLabel/fonts/normal_font = ExtResource("1_nvwvg")
 TabContainer/constants/icon_separation = 7
-TabContainer/font_sizes/font_size = 18
-TabContainer/fonts/font = ExtResource("1_nvwvg")
 TabContainer/styles/tab_disabled = SubResource("StyleBoxFlat_5mifo")
 TabContainer/styles/tab_focus = SubResource("StyleBoxFlat_nvwvg")
 TabContainer/styles/tab_hovered = SubResource("StyleBoxFlat_hdcpn")

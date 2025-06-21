@@ -12,6 +12,7 @@ public class BuyCommand : IApCommandInterface
     
     public void RunCommand(ApClient client, ChatPrintJsonPacket message, string[] args)
     {
+        if (!Settings.Data.GetBool("buy_command", true)) return;
         if (!int.TryParse(args[0], out var itemNumber) || !client.MissingLocations.ContainsKey(itemNumber))
         {
             client.Say($"Item number [{itemNumber}] doesn't exist or is already bought");

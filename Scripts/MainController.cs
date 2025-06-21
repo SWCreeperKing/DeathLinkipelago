@@ -94,7 +94,7 @@ public partial class MainController : Node
     public override void _Ready()
     {
         _FunnyButton.Pressed += () => SendDeath(FunnyButtonMessages[Random.Next(FunnyButtonMessages.Length)]);
-        SwitchScene(0);
+        // SwitchScene(0);
     }
 
     public override void _Process(double delta)
@@ -149,7 +149,7 @@ public partial class MainController : Node
             else
             {
                 InventoryUsed["Death Shield"]++;
-                Client.Say("The Death Trap was shielded");
+                Client.Say($"The Death Trap was shielded ({this["Death Shield"]} shields remaining)");
             }
 
             InventoryUsed["Death Trap"]++;
@@ -214,6 +214,7 @@ public partial class MainController : Node
     {
         if (what != NotificationWMCloseRequest) return;
         SaveSlotData();
+        Settings.Save();
         File.WriteAllText($"{SaveDir}/data.json", JsonConvert.SerializeObject(_Login.GetLoginInfo()));
         GetTree().Quit();
     }

@@ -12,6 +12,7 @@ public class InventoryCheckCommand : IApCommandInterface
     
     public void RunCommand(ApClient client, ChatPrintJsonPacket message, string[] args)
     {
+        if (!Settings.Data.GetBool("inv_command", true)) return;
         switch (args[0].ToLower())
         {
             case "shield":

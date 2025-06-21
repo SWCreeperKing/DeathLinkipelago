@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://mdoa55dmcvm2"]
+[gd_scene load_steps=13 format=3 uid="uid://mdoa55dmcvm2"]
 
 [ext_resource type="Script" uid="uid://bmnyyh64t4kr0" path="res://Scripts/MainController.cs" id="1_r150o"]
 [ext_resource type="Theme" uid="uid://doy8rp1q74ye0" path="res://Resources/MainUITheme.tres" id="2_idj7w"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://bfanr1p00a0br" path="res://Scripts/Charts/DeathChart.cs" id="6_vy5pj"]
 [ext_resource type="FontFile" uid="uid://dlg8eleo800rl" path="res://Assets/Font/CascadiaMono.ttf" id="7_bmxlf"]
 [ext_resource type="Script" uid="uid://8lnrr3qsbjfq" path="res://Scripts/Charts/BlameChart.cs" id="8_4kpch"]
+[ext_resource type="Script" uid="uid://cact6ilxym2y3" path="res://Scripts/Settings.cs" id="12_grg3l"]
 
 [node name="PanelContainer" type="PanelContainer" node_paths=PackedStringArray("_Scenes", "_FunnyButton", "_Inventory", "_Deaths", "_GrassStatus", "_LifeCoinStatus", "_SaveStatus", "_ShopLevel", "_ShopItems", "_DeathShop", "_LifeShop", "_Login", "Tracker")]
 anchors_preset = 15
@@ -43,11 +44,12 @@ theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 5
 theme_override_constants/margin_bottom = 5
 
-[node name="Login" type="VBoxContainer" parent="Login" node_paths=PackedStringArray("_Main", "_AddressEdit", "_PasswordEdit", "_PortEdit", "_SlotEdit", "_Login", "_ErrorLabel")]
+[node name="Login" type="VBoxContainer" parent="Login" node_paths=PackedStringArray("_Main", "_AddressEdit", "_PasswordEdit", "_PortEdit", "_SlotEdit", "_Login", "_ErrorLabel", "_VersionLabel")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("2_kln2b")
+_Version = "v.0.13.1"
 _Main = NodePath("../..")
 _AddressEdit = NodePath("LineEdit")
 _PasswordEdit = NodePath("LineEdit2")
@@ -55,6 +57,7 @@ _PortEdit = NodePath("LineEdit3")
 _SlotEdit = NodePath("LineEdit4")
 _Login = NodePath("HBoxContainer/Button")
 _ErrorLabel = NodePath("Label")
+_VersionLabel = NodePath("HBoxContainer2/Label2")
 
 [node name="LineEdit" type="LineEdit" parent="Login/Login"]
 layout_mode = 2
@@ -124,15 +127,38 @@ modulate = Color(1, 1, 1, 0)
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="HBoxContainer2" type="HBoxContainer" parent="Login/Login"]
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="Login/Login/HBoxContainer2"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+text = "Deathlinkipelago "
+horizontal_alignment = 1
+
+[node name="VSeparator" type="VSeparator" parent="Login/Login/HBoxContainer2"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Button" type="Button" parent="Login/Login/HBoxContainer2"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+theme_override_font_sizes/font_size = 10
+text = "Donate ❤️ :3"
+script = ExtResource("4_rgh2o")
+_Link = "https://www.patreon.com/c/SW_CreeperKing"
+
 [node name="Deathlinkipelago" type="TabContainer" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme = ExtResource("2_idj7w")
 tab_alignment = 1
-current_tab = 0
+current_tab = 2
 
 [node name="Info" type="ScrollContainer" parent="Deathlinkipelago"]
+visible = false
 layout_mode = 2
 metadata/_tab_index = 0
 
@@ -324,10 +350,127 @@ script = ExtResource("5_jw32o")
 _Main = NodePath("../../../../../..")
 _Columns = Array[String](["", "Item #", "Item", "Slot", "Game", "Priority"])
 
+[node name="Settings" type="ScrollContainer" parent="Deathlinkipelago"]
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Deathlinkipelago/Settings"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Deathlinkipelago/Settings/HBoxContainer" node_paths=PackedStringArray("DataControls", "_AnonymizePercentLabel")]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+script = ExtResource("12_grg3l")
+_Theme = ExtResource("2_idj7w")
+DataControls = {
+"anonymize_items": NodePath("CheckBox4"),
+"anonymize_n%": NodePath("HSlider"),
+"buy_command": NodePath("CheckBox6"),
+"global_font": NodePath("HBoxContainer/SpinBox"),
+"hide_shields": NodePath("CheckBox2"),
+"hide_traps": NodePath("CheckBox"),
+"inv_command": NodePath("CheckBox3"),
+"separated_hinted": NodePath("CheckBox5")
+}
+_AnonymizePercentLabel = NodePath("Label2")
+
+[node name="HSeparator" type="HSeparator" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Button" type="Button" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+text = "Open Save Directory"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+text = "Global Font Size: "
+
+[node name="SpinBox" type="SpinBox" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+value = 18.0
+
+[node name="CheckBox6" type="CheckBox" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+button_pressed = true
+text = " Allow the [buy] command"
+
+[node name="CheckBox3" type="CheckBox" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+button_pressed = true
+text = " Allow the [inv] command"
+
+[node name="CheckBox5" type="CheckBox" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+button_pressed = true
+text = " Hinted Items are separated"
+
+[node name="CheckBox" type="CheckBox" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+button_pressed = true
+text = " Disguise Items containing \" Trap\""
+
+[node name="CheckBox2" type="CheckBox" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+button_pressed = true
+text = " Disguise Items containing \" Shield\""
+
+[node name="CheckBox4" type="CheckBox" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+text = " Anonymize items"
+
+[node name="Label" type="Label" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+text = "% of items to anonymize:"
+horizontal_alignment = 1
+
+[node name="HSlider" type="HSlider" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 9.445)
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+max_value = 10.0
+value = 3.0
+tick_count = 11
+ticks_on_borders = true
+
+[node name="Label2" type="Label" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+text = "n%"
+horizontal_alignment = 1
+
+[node name="HSeparator2" type="HSeparator" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Button2" type="Button" parent="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_idj7w")
+text = "Saftey Save"
+
 [node name="Credits" type="ScrollContainer" parent="Deathlinkipelago"]
 visible = false
 layout_mode = 2
-metadata/_tab_index = 2
+metadata/_tab_index = 3
 
 [node name="MarginContainer" type="MarginContainer" parent="Deathlinkipelago/Credits"]
 layout_mode = 2
@@ -420,3 +563,4 @@ script = ExtResource("4_rgh2o")
 _Link = "https://linktr.ee/raphael2512"
 
 [connection signal="pressed" from="Deathlinkipelago/Info/Info/Button2" to="." method="Disconnect"]
+[connection signal="pressed" from="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer/Button" to="Deathlinkipelago/Settings/HBoxContainer/VBoxContainer" method="OpenSaveDir"]

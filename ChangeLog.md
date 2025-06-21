@@ -1,3 +1,11 @@
+# v.0.13.1
+
+- [APWorld] Hopefully fixed a bug with priority locations causing gen problems (AP will prioritize locations over completability)
+  - As a consequence the final page of the shop will never be priority locations
+- [Client] Fixed a bug with the death chart not removing old points
+- [Client] Added settings
+
+---
 # v.0.13.0
 
 - [Yaml] Added `send_scout_hints` yaml option

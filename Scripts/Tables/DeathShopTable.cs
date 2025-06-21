@@ -52,8 +52,12 @@ public partial class DeathShopTable : TextTable
         if (Client is null || !Client.IsConnected || !Client.Session.Socket.Connected) return;
         var locations = rawLocations
                        .Where(kv => kv.Key <= ShopLevel * 10)
-                       .OrderByDescending(kv => PrioritizedItems.Contains(kv.Key))
-                       .ThenByDescending(kv => HintedItems.Contains(kv.Key));
+                       .OrderByDescending(kv => PrioritizedItems.Contains(kv.Key));
+
+        if (Settings.Data.GetBool("separated_hinted", true))
+        {
+            locations = locations.ThenByDescending(kv => HintedItems.Contains(kv.Key));
+        }
 
         if (MainController.Config.SendScoutHints)
         {
@@ -69,8 +73,17 @@ public partial class DeathShopTable : TextTable
         UpdateData(locations
                   .Select(kv =>
                    {
-                       var itemName = $"{kv.Value.ItemName}".Replace(" Trap", " Sheild")
-                                                            .Replace(" Shield", " Tarp");
+                       var itemName = $"{kv.Value.ItemName}";
+                       if (Settings.Data.GetBool("hide_traps", true))
+                       {
+                           itemName = itemName.Replace(" Trap", " Sheild");
+                       }
+
+                       if (Settings.Data.GetBool("hide_shields", true))
+                       {
+                           itemName = itemName.Replace(" Shield", " Tarp");
+                       }
+
                        return new[]
                        {
                            _Main["Death Coin"] > 0
@@ -113,8 +126,8 @@ public partial class DeathShopTable : TextTable
 
     public string GetItemColor(ScoutedItemInfo item)
     {
-        if (item.ItemName.Contains(" Shield")) return Red;
-        if (item.ItemName.Contains(" Trap")) return Blue;
+        if (item.ItemName.Contains(" Shield") && Settings.Data.GetBool("hide_shields", true)) return Red;
+        if (item.ItemName.Contains(" Trap") && Settings.Data.GetBool("hide_traps", true)) return Blue;
         if (item.Flags.HasFlag(Advancement)) return Gold;
         if (item.Flags.HasFlag(Trap) || item.Flags.HasFlag(NeverExclude)) return Blue;
         return Beige;
