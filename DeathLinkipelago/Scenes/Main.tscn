@@ -155,7 +155,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme = ExtResource("2_idj7w")
 tab_alignment = 1
-current_tab = 2
+current_tab = 1
 
 [node name="Info" type="ScrollContainer" parent="Deathlinkipelago"]
 visible = false
@@ -198,7 +198,6 @@ horizontal_alignment = 1
 [node name="Inventory" type="FoldableContainer" parent="Deathlinkipelago/Info/Info"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-text = "Inventory"
 title_alignment = 1
 
 [node name="RichTextLabel" type="RichTextLabel" parent="Deathlinkipelago/Info/Info/Inventory"]
@@ -214,7 +213,6 @@ _Columns = Array[String](["Item Name", "Stock", "Used", "Total"])
 [node name="Death Tracker" type="FoldableContainer" parent="Deathlinkipelago/Info/Info" node_paths=PackedStringArray("Info", "Chart", "BlamePi")]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-text = "Death Tracker"
 title_alignment = 1
 script = ExtResource("5_bmxlf")
 Info = NodePath("VBoxContainer/Label2")
@@ -262,7 +260,6 @@ script = ExtResource("4_pbw6q")
 _Columns = Array[String](["Slot Name", "Deaths"])
 
 [node name="Shop" type="ScrollContainer" parent="Deathlinkipelago"]
-visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
@@ -278,7 +275,6 @@ layout_mode = 2
 [node name="LifeShop" type="FoldableContainer" parent="Deathlinkipelago/Shop/Death Shop"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-text = "Life Shop"
 title_alignment = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Deathlinkipelago/Shop/Death Shop/LifeShop"]
@@ -307,7 +303,6 @@ _Columns = Array[String](["", "Item"])
 [node name="DeathShop" type="FoldableContainer" parent="Deathlinkipelago/Shop/Death Shop"]
 layout_mode = 2
 theme = ExtResource("2_idj7w")
-text = "Death Shop"
 title_alignment = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Deathlinkipelago/Shop/Death Shop/DeathShop"]
@@ -351,6 +346,7 @@ _Main = NodePath("../../../../../..")
 _Columns = Array[String](["", "Item #", "Item", "Slot", "Game", "Priority"])
 
 [node name="Settings" type="ScrollContainer" parent="Deathlinkipelago"]
+visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 

@@ -1,6 +1,10 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeathLinkipelago", "DeathLinkipelago.csproj", "{98F7DFC7-7E82-470D-90C0-F925E0CE8A13}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeathLinkipelago", "DeathLinkipelago\DeathLinkipelago.csproj", "{98F7DFC7-7E82-470D-90C0-F925E0CE8A13}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeathlinkipelagoCLI", "..\..\C#\DeathlinkipelagoCLI\DeathlinkipelagoCLI.csproj", "{26B842A4-0A8F-4800-951A-3A63F9948B04}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeathlinkipelagoSharedLibrary", "..\..\C#\DeathlinkipelagoSharedLibrary\DeathlinkipelagoSharedLibrary.csproj", "{9FD2A26C-F2CE-47DF-A87B-B032D5DDB503}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,5 +19,17 @@ Global
 		{98F7DFC7-7E82-470D-90C0-F925E0CE8A13}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
 		{98F7DFC7-7E82-470D-90C0-F925E0CE8A13}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
 		{98F7DFC7-7E82-470D-90C0-F925E0CE8A13}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+		{26B842A4-0A8F-4800-951A-3A63F9948B04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26B842A4-0A8F-4800-951A-3A63F9948B04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26B842A4-0A8F-4800-951A-3A63F9948B04}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26B842A4-0A8F-4800-951A-3A63F9948B04}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{26B842A4-0A8F-4800-951A-3A63F9948B04}.ExportRelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{26B842A4-0A8F-4800-951A-3A63F9948B04}.ExportRelease|Any CPU.Build.0 = Debug|Any CPU
+		{9FD2A26C-F2CE-47DF-A87B-B032D5DDB503}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FD2A26C-F2CE-47DF-A87B-B032D5DDB503}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FD2A26C-F2CE-47DF-A87B-B032D5DDB503}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FD2A26C-F2CE-47DF-A87B-B032D5DDB503}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{9FD2A26C-F2CE-47DF-A87B-B032D5DDB503}.ExportRelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FD2A26C-F2CE-47DF-A87B-B032D5DDB503}.ExportRelease|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal

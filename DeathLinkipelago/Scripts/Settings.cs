@@ -12,20 +12,20 @@ public partial class Settings : VBoxContainer
 {
     public static SettingsData Data = new();
     [Export] private Theme _Theme;
-    [Export] private Dictionary<string, Control> DataControls = [];
+    [Export] private Godot.Collections.Dictionary<string, Control> _DataControls = new();
     [Export] private Label _AnonymizePercentLabel;
     private event EventHandler<string> ValueChanged;
 
     public override void _EnterTree()
     {
         if (!File.Exists($"{SaveDir}/Settings.txt")) return;
-        Data = JsonConvert.DeserializeObject<SettingsData>(File.ReadAllText($"{SaveDir}/Settings.txt"));
+        Data = JsonConvert.DeserializeObject<SettingsData>(File.ReadAllText($"{SaveDir}/Settings.txt").Replace("\r", ""));
     }
 
     public override void _Ready()
     {
         ValueChanged += (control, id) =>
-        {
+        { 
             switch (id)
             {
                 case "anonymize_n%":
@@ -40,7 +40,7 @@ public partial class Settings : VBoxContainer
             }
         };
 
-        foreach (var (id, control) in DataControls)
+        foreach (var (id, control) in _DataControls)
         {
             switch (control)
             {

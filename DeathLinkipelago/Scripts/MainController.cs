@@ -32,7 +32,7 @@ public partial class MainController : Node
         "I fell like some of these messages are too long, bah, it'll be fineeee~~~"
     ]; // totally not referencing dbza at all (total of 3 times) 
 
-    public static ApClient Client;
+    // public static ApClient Client;
     public static Config Config;
     public static ConcurrentDictionary<string, int> DeathCounter = [];
     public static double LastSave;
